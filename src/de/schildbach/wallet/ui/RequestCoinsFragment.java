@@ -44,7 +44,7 @@ import de.schildbach.wallet.util.ActionBarFragment;
 import de.schildbach.wallet.util.NfcTools;
 import de.schildbach.wallet.util.QrDialog;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet_test.R;
+import de.schildbach.wallet.R;
 
 /**
  * @author Andreas Schildbach

@@ -23,7 +23,7 @@ import android.graphics.Bitmap;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
-import de.schildbach.wallet_test.R;
+import de.schildbach.wallet.R;
 
 /**
  * @author Andreas Schildbach

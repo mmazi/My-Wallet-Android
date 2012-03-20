@@ -53,7 +53,7 @@ import com.google.bitcoin.store.WalletProtobufSerializer;
 import de.schildbach.wallet.util.ErrorReporter;
 import de.schildbach.wallet.util.Iso8601Format;
 import de.schildbach.wallet.util.StrictModeWrapper;
-import de.schildbach.wallet_test.R;
+import de.schildbach.wallet.R;
 
 /**
  * @author Andreas Schildbach

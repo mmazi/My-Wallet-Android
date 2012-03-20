@@ -13,7 +13,7 @@ FILES
 /data/data/de.schildbach.wallet/files/wallet (MODE_PRIVATE)
 	Wallet for prodnet
 
-/data/data/de.schildbach.wallet_test/files/wallet-testnet (MODE_WORLD_READABLE | MODE_WORLD_WRITEABLE)
+/data/data/de.schildbach.wallet/files/wallet-testnet (MODE_WORLD_READABLE | MODE_WORLD_WRITEABLE)
 	Wallet for testnet
 
 The wallet file format is not compatible to wallet.dat (Satoshi client).
@@ -21,7 +21,7 @@ The wallet file format is not compatible to wallet.dat (Satoshi client).
 /data/data/de.schildbach.wallet/files/key-backup-base58 (MODE_PRIVATE)
 	Backups of private keys for prodnet
 
-/data/data/de.schildbach.wallet_test/files/key-backup-base58-testnet (MODE_WORLD_READABLE | MODE_WORLD_WRITEABLE)
+/data/data/de.schildbach.wallet/files/key-backup-base58-testnet (MODE_WORLD_READABLE | MODE_WORLD_WRITEABLE)
 	Backups of private keys for testnet
 
 
@@ -29,12 +29,12 @@ DEBUGGING
 
 Wallet file for testnet can be pulled from (even unrooted) device using
 
-	adb pull /data/data/de.schildbach.wallet_test/files/wallet-testnet
+	adb pull /data/data/de.schildbach.wallet/files/wallet-testnet
 
 Backups of key for testnet can be pulled from device using
 
-	adb pull /data/data/de.schildbach.wallet_test/files/key-backup-asn1-testnet
-	adb pull /data/data/de.schildbach.wallet_test/files/key-backup-base58-testnet
+	adb pull /data/data/de.schildbach.wallet/files/key-backup-asn1-testnet
+	adb pull /data/data/de.schildbach.wallet/files/key-backup-base58-testnet
 
 Log messages can be viewed by
 

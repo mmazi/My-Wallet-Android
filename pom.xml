@@ -8,7 +8,7 @@
 	<artifactId>wallet</artifactId>
 	<packaging>apk</packaging>
 	<version>2.0</version>
-	<name>Bitcoin Wallet</name>
+	<name>Blockchain</name>
 
     <repositories>
         <repository>

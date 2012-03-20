@@ -31,7 +31,7 @@ import com.google.bitcoin.core.Wallet.BalanceType;
 
 import de.schildbach.wallet.ui.WalletActivity;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet_test.R;
+import de.schildbach.wallet.R;
 
 /**
  * @author Andreas Schildbach
