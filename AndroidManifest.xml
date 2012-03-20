@@ -76,7 +76,7 @@
 		<provider android:name="de.schildbach.wallet.ExchangeRatesProvider" android:authorities="de.schildbach.wallet.exchange_rates"
 			android:exported="false" />
 
-		<receiver android:name="de.schildbach.wallet.WalletBalanceWidgetProvider" android:label="Bitcoin Wallet Balance">
+		<receiver android:name="de.schildbach.wallet.WalletBalanceWidgetProvider" android:label="Blockchain Balance">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
 			</intent-filter>

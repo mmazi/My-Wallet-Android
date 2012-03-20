@@ -35,7 +35,7 @@ import java.util.Hashtable;
  */
 public final class QRCodeWriter implements Writer {
 
-  private static final int QUIET_ZONE_SIZE = 0; // patched for Bitcoin Wallet
+  private static final int QUIET_ZONE_SIZE = 0; // patched for Blockchain
 
   public BitMatrix encode(String contents, BarcodeFormat format, int width, int height)
       throws WriterException {

@@ -52,7 +52,7 @@ import android.os.StatFs;
 public class ErrorReporter implements Thread.UncaughtExceptionHandler
 {
 	private static final String STACKTRACE_FILENAME = ".stacktrace";
-	private static final String REPORT_SUBJECT = "Bitcoin Wallet Crash Report";
+	private static final String REPORT_SUBJECT = "Blockchain Crash Report";
 	private static final String REPORT_EMAIL = "wallet@schildbach.de";
 	private static final String DIALOG_TITLE = "Previous crash detected";
 	private static final String DIALOG_MESSAGE = "Would you like to send a crash report, helping to fix this issue in the future?";
