@@ -331,7 +331,7 @@ public class BlockchainService extends android.app.Service
 				}
 				else
 				{
-					peerGroup.setMaxConnections(1);
+					peerGroup.setMaxConnections(6);
 					peerGroup.addPeerDiscovery(new PeerDiscovery()
 					{
 						public InetSocketAddress[] getPeers() throws PeerDiscoveryException
@@ -344,9 +344,7 @@ public class BlockchainService extends android.app.Service
 						}
 					});
 				}
-				peerGroup.start();
-
-				peerGroup.startBlockChainDownload(blockchainDownloadListener);
+				//peerGroup.start();
 			}
 			else if (!hasEverything && peerGroup != null)
 			{

@@ -21,9 +21,39 @@
             <snapshots/>
             <url>http://nexus.bitcoinj.org/content/repositories/snapshots</url>
         </repository>
+        <repository>
+            <id>cubeia</id>
+            <snapshots/>
+            <url>http://m2.cubeia.com/nexus/content/repositories/thirdparty</url>
+        </repository>
     </repositories>
     
     <dependencies>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.6</version>
+        </dependency>
 		<dependency>
 			<groupId>android</groupId>
 			<artifactId>android</artifactId>
@@ -46,12 +76,18 @@
 			<version>1.6.2</version>
 		</dependency>
         <dependency>
+			<groupId>de.roderick</groupId>
+			<artifactId>weberknecht</artifactId>
+			<version>0.1.1</version>
+		</dependency>
+        <dependency>
             <groupId>com.google</groupId>
             <artifactId>bitcoinj</artifactId>
             <version>0.4</version>
-            <scope>compile</scope>
             <!-- Remove this if you are not developing an Android app -->
             <classifier>android</classifier>
+            <scope>system</scope>
+            <systemPath>${user.home}/Sites/blockchain.info/bitcoinj/target/bitcoinj-0.5-SNAPSHOT-android.jar</systemPath>
         </dependency>
 	</dependencies>
 

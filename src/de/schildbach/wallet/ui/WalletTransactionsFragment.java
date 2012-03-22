@@ -160,7 +160,7 @@ public final class WalletTransactionsFragment extends Fragment
 		private final WalletEventListener walletEventListener = new AbstractWalletEventListener()
 		{
 			@Override
-			public void onChange()
+			public void onChange(Wallet wallet)
 			{
 				forceLoad();
 			}
@@ -256,7 +256,9 @@ public final class WalletTransactionsFragment extends Fragment
 				final DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(activity);
 				final int colorSignificant = getResources().getColor(R.color.significant);
 				final int colorInsignificant = getResources().getColor(R.color.insignificant);
-
+				final int colorSent = getResources().getColor(R.color.color_sent);
+				final int colorReceived = getResources().getColor(R.color.color_received);
+				
 				@Override
 				public View getView(final int position, View row, final ViewGroup parent)
 				{
@@ -361,6 +363,13 @@ public final class WalletTransactionsFragment extends Fragment
 						rowValue.setTextColor(textColor);
 						rowValue.setAmount(value);
 
+
+						if (sent) {
+							rowValue.setTextColor(colorSent);
+						} else {
+							rowValue.setTextColor(colorReceived);
+						}
+					
 						return row;
 					}
 					catch (final ScriptException x)

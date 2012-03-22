@@ -72,15 +72,7 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 		{
 			public void onClick(final View v)
 			{
-				if (getPackageManager().resolveActivity(Constants.INTENT_QR_SCANNER, 0) != null)
-				{
-					startActivityForResult(Constants.INTENT_QR_SCANNER, REQUEST_CODE_SCAN);
-				}
-				else
-				{
-					showMarketPage(Constants.PACKAGE_NAME_ZXING);
-					longToast(R.string.send_coins_install_qr_scanner_msg);
-				}
+				showQRReader();
 			}
 		});
 		actionBar.addButton(R.drawable.ic_action_help).setOnClickListener(new OnClickListener()
@@ -92,6 +84,18 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 		});
 
 		handleIntent(getIntent());
+	}
+
+	public void showQRReader() {
+		if (getPackageManager().resolveActivity(Constants.INTENT_QR_SCANNER, 0) != null)
+		{
+			startActivityForResult(Constants.INTENT_QR_SCANNER, REQUEST_CODE_SCAN);
+		}
+		else
+		{
+			showMarketPage(Constants.PACKAGE_NAME_ZXING);
+			longToast(R.string.send_coins_install_qr_scanner_msg);
+		}
 	}
 
 	@Override
@@ -134,8 +138,8 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 				}
 				catch (final BitcoinURIParseException x)
 				{
-					parseErrorDialog(contents);
-				}
+					errorDialog(R.string.send_coins_uri_parse_error_title, contents);
+				} 
 			}
 		}
 	}
@@ -159,7 +163,7 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 			}
 			catch (final BitcoinURIParseException x)
 			{
-				parseErrorDialog(intentUri.toString());
+				errorDialog(R.string.send_coins_uri_parse_error_title, intentUri.toString());
 				return;
 			}
 		}
@@ -173,7 +177,7 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 			}
 			catch (final BitcoinURIParseException x)
 			{
-				parseErrorDialog(intentUri.toString());
+				errorDialog(R.string.send_coins_uri_parse_error_title, intentUri.toString());
 				return;
 			}
 		}

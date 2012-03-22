@@ -108,6 +108,9 @@ public final class TransactionActivity extends AbstractWalletActivity
 
 	private void handleIntent(final Intent intent)
 	{
+		
+		System.out.println("Handle Intent");
+		
 		final Uri intentUri = intent.getData();
 		final String scheme = intentUri != null ? intentUri.getScheme() : null;
 

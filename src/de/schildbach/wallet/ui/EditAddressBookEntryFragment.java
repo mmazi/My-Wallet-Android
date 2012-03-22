@@ -104,26 +104,12 @@ public final class EditAddressBookEntryFragment extends DialogFragment
 				{
 					public void onClick(final DialogInterface dialog, final int whichButton)
 					{
-						final String newLabel = viewLabel.getText().toString().trim();
-
-						if (newLabel.length() > 0)
-						{
-							final ContentValues values = new ContentValues();
-							values.put(AddressBookProvider.KEY_LABEL, newLabel);
-
-							if (isAdd)
-								contentResolver.insert(uri, values);
-							else
-								contentResolver.update(uri, values, null, null);
-						}
-						else if (!isAdd)
-						{
-							contentResolver.delete(uri, null, null);
-						}
+						AddressBookProvider.setLabel(contentResolver, address, viewLabel.getText().toString());
 
 						dismiss();
 					}
 				});
+		
 		if (!isAdd)
 		{
 			dialog.setNeutralButton(R.string.edit_address_book_entry_dialog_button_delete, new DialogInterface.OnClickListener()

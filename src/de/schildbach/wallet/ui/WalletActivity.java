@@ -23,6 +23,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
+import piuk.ui.WelcomeFragment;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ComponentName;
@@ -44,6 +46,7 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.webkit.WebView;
 import de.schildbach.wallet.Constants;
+import de.schildbach.wallet.WalletApplication;
 import de.schildbach.wallet.service.BlockchainService;
 import de.schildbach.wallet.util.ActionBarFragment;
 import de.schildbach.wallet.util.ErrorReporter;
@@ -135,6 +138,12 @@ public final class WalletActivity extends AbstractWalletActivity
 		}
 
 		checkVersionAndTimeskewAlert();
+		
+
+		WalletApplication application = (WalletApplication) getApplication();
+		
+		if (application.isNewWallet())
+			WelcomeFragment.show(getSupportFragmentManager());
 	}
 
 	@Override

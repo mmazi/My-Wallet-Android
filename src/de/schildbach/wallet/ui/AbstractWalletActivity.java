@@ -72,17 +72,17 @@ public abstract class AbstractWalletActivity extends FragmentActivity
 		return actionBar;
 	}
 
-	protected final void toast(final String text, final Object... formatArgs)
+	public final void toast(final String text, final Object... formatArgs)
 	{
 		toast(text, 0, Toast.LENGTH_SHORT, formatArgs);
 	}
 
-	protected final void longToast(final String text, final Object... formatArgs)
+	public final void longToast(final String text, final Object... formatArgs)
 	{
 		toast(text, 0, Toast.LENGTH_LONG, formatArgs);
 	}
 
-	protected final void toast(final String text, final int imageResId, final int duration, final Object... formatArgs)
+	public final void toast(final String text, final int imageResId, final int duration, final Object... formatArgs)
 	{
 		final View view = getLayoutInflater().inflate(R.layout.transient_notification, null);
 		TextView tv = (TextView) view.findViewById(R.id.transient_notification_text);
@@ -95,17 +95,17 @@ public abstract class AbstractWalletActivity extends FragmentActivity
 		toast.show();
 	}
 
-	protected final void toast(final int textResId, final Object... formatArgs)
+	public final void toast(final int textResId, final Object... formatArgs)
 	{
 		toast(textResId, 0, Toast.LENGTH_SHORT, formatArgs);
 	}
 
-	protected final void longToast(final int textResId, final Object... formatArgs)
+	public final void longToast(final int textResId, final Object... formatArgs)
 	{
 		toast(textResId, 0, Toast.LENGTH_LONG, formatArgs);
 	}
 
-	protected final void toast(final int textResId, final int imageResId, final int duration, final Object... formatArgs)
+	public final void toast(final int textResId, final int imageResId, final int duration, final Object... formatArgs)
 	{
 		final View view = getLayoutInflater().inflate(R.layout.transient_notification, null);
 		TextView tv = (TextView) view.findViewById(R.id.transient_notification_text);
@@ -118,11 +118,11 @@ public abstract class AbstractWalletActivity extends FragmentActivity
 		toast.show();
 	}
 
-	protected void parseErrorDialog(final String uri)
+	public void errorDialog(final int title, final String message)
 	{
 		final Builder dialog = new AlertDialog.Builder(this);
-		dialog.setTitle(R.string.send_coins_uri_parse_error_title);
-		dialog.setMessage(uri);
+		dialog.setTitle(title);
+		dialog.setMessage(message);
 		dialog.setNeutralButton(R.string.button_dismiss, null);
 		dialog.show();
 	}
@@ -158,7 +158,7 @@ public abstract class AbstractWalletActivity extends FragmentActivity
 			return "";
 	}
 
-	protected void showMarketPage(final String packageName)
+	public void showMarketPage(final String packageName)
 	{
 		final Intent marketIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(String.format(Constants.MARKET_APP_URL, packageName)));
 		if (getPackageManager().resolveActivity(marketIntent, 0) != null)

@@ -2,6 +2,8 @@
 <resources>
 
 	<color name="significant">#ff000000</color>
+    <color name="color_sent">#C73E38</color>
+    <color name="color_received">#4BB047</color>
 	<color name="less_significant">#ff666666</color>
 	<color name="insignificant">#ffcccccc</color>
 	<color name="error">#ffff0000</color>

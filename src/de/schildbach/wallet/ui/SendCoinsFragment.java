@@ -22,6 +22,7 @@ import java.math.BigInteger;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -223,7 +224,9 @@ public final class SendCoinsFragment extends Fragment
 								state = State.SENT;
 								updateView();
 
+								
 								final String label = AddressBookProvider.resolveLabel(activity.getContentResolver(), receivingAddress.toString());
+								
 								if (label == null)
 									showAddAddressDialog(receivingAddress.toString());
 

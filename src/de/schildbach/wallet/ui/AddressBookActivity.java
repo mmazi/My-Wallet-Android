@@ -209,11 +209,11 @@ public final class AddressBookActivity extends AbstractWalletActivity
 			}
 			catch (final AddressFormatException x)
 			{
-				parseErrorDialog(contents);
+				errorDialog(R.string.send_coins_uri_parse_error_title, contents);
 			}
 			catch (final BitcoinURIParseException x)
 			{
-				parseErrorDialog(contents);
+				errorDialog(R.string.send_coins_uri_parse_error_title, contents);
 			}
 		}
 	}

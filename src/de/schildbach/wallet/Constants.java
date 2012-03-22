@@ -36,13 +36,7 @@ public class Constants
 
 	public static final NetworkParameters NETWORK_PARAMETERS = TEST ? NetworkParameters.testNet() : NetworkParameters.prodNet();
 
-	private static final String WALLET_FILENAME_PROD = "wallet";
-	private static final String WALLET_FILENAME_TEST = "wallet-testnet";
-	public static final String WALLET_FILENAME = Constants.TEST ? WALLET_FILENAME_TEST : WALLET_FILENAME_PROD;
-
-	private static final String WALLET_FILENAME_PROTOBUF_PROD = "wallet-protobuf";
-	private static final String WALLET_FILENAME_PROTOBUF_TEST = "wallet-protobuf-testnet";
-	public static final String WALLET_FILENAME_PROTOBUF = Constants.TEST ? WALLET_FILENAME_PROTOBUF_TEST : WALLET_FILENAME_PROTOBUF_PROD;
+	static final String WALLET_FILENAME = "wallet.aes.json";
 
 	private static final String WALLET_KEY_BACKUP_BASE58_PROD = "key-backup-base58";
 	private static final String WALLET_KEY_BACKUP_BASE58_TEST = "key-backup-base58-testnet";
@@ -115,6 +109,7 @@ public class Constants
 	public static final Intent INTENT_QR_SCANNER = new Intent("com.google.zxing.client.android.SCAN").putExtra("SCAN_MODE", "QR_CODE_MODE");
 	public static final String PACKAGE_NAME_ZXING = "com.google.zxing.client.android";
 
+	public static final String PREFS_KEY = "general";
 	public static final String PREFS_KEY_LAST_VERSION = "last_version";
 	public static final String PREFS_KEY_AUTOSYNC = "autosync";
 	public static final String PREFS_KEY_SELECTED_ADDRESS = "selected_address";

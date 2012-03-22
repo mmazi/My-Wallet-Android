@@ -198,7 +198,7 @@ public final class WalletAddressFragment extends Fragment
 	{
 		final Address selectedAddress = application.determineSelectedAddress();
 
-		if (!selectedAddress.equals(lastSelectedAddress))
+		if (selectedAddress != null && !selectedAddress.equals(lastSelectedAddress))
 		{
 			lastSelectedAddress = selectedAddress;
 

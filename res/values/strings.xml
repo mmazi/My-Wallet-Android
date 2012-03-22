@@ -2,9 +2,16 @@
 
 <resources>
 
-	<string name="app_name">Bitcoin Wallet</string>
+	<string name="app_name">Blockchain</string>
 	<string name="toast_wallet_reset">Wallet was reset,\nwill take some time to recover</string>
-
+	<string name="toast_wallet_download_failed">Failed to download wallet from server</string>
+	<string name="toast_wallet_decrypt_failed">Error decrypting wallet. Please check your password.</string>
+	<string name="toast_generated_new_wallet">Generated new wallet.</string>
+	<string name="toast_downloading_wallet">Dwonloading wallet.</string>
+	
+	
+	<string name="error_pairing_wallet">Error pairing wallet.</string>
+	
 	<string name="blockchain_state_disclaimer">Use at your own risk. Read the safety notes.</string>
 	<string name="blockchain_state_message_hours">Blockchain %1$s, %2$d hours behind</string>
 	<string name="blockchain_state_message_days">Blockchain %1$s, %2$d days behind</string>
@@ -92,6 +99,11 @@
 	<string name="address_book_context_determine_creation_time_title">Determine creation time</string>
 	<string name="address_book_msg_clipboard_empty">Clipboard is empty</string>
 
+	<string name="welcome_title">Welcome</string>
+	<string name="welcome_text">If you already have a My wallet account press the pair device button to login. Otherwise please create a new account. It\'s Free!</string>
+	<string name="welcome_pair_device_button">Pair Device</string>
+	<string name="welcome_new_account_button">New Account</string>
+	
 	<string name="edit_address_book_entry_dialog_title_add">Add address</string>
 	<string name="edit_address_book_entry_dialog_title_edit">Edit address</string>
 	<string name="edit_address_book_entry_dialog_address_label">Address</string>

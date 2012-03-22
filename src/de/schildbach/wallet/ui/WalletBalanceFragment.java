@@ -68,7 +68,7 @@ public final class WalletBalanceFragment extends Fragment implements LoaderManag
 	private final WalletEventListener walletEventListener = new AbstractWalletEventListener()
 	{
 		@Override
-		public void onChange()
+		public void onChange(Wallet wallet)
 		{
 			getActivity().runOnUiThread(new Runnable()
 			{

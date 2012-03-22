@@ -46,6 +46,32 @@ public class AddressBookProvider extends ContentProvider
 	public static final String SELECTION_IN = "in";
 	public static final String SELECTION_NOTIN = "notin";
 
+	public static void setLabel(final ContentResolver contentResolver, final String address, String newLabel) {
+
+		final String label = AddressBookProvider.resolveLabel(contentResolver, address);
+
+		final boolean isAdd = label == null;
+		
+		Uri uri = AddressBookProvider.CONTENT_URI.buildUpon().appendPath(address).build();
+
+		newLabel = newLabel.trim();
+
+		if (newLabel.length() > 0)
+		{
+			final ContentValues values = new ContentValues();
+			values.put(AddressBookProvider.KEY_LABEL, newLabel);
+
+			if (isAdd)
+				contentResolver.insert(uri, values);
+			else
+				contentResolver.update(uri, values, null, null);
+		}
+		else if (!isAdd)
+		{
+			contentResolver.delete(uri, null, null);
+		}
+	}
+
 	public static String resolveLabel(final ContentResolver contentResolver, final String address)
 	{
 		String label = null;

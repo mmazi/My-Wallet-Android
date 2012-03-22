@@ -49,7 +49,7 @@ public final class AmountCalculatorFragment extends DialogFragment implements Lo
 	{
 		void use(final BigInteger amount);
 	}
-
+  
 	public static final String FRAGMENT_TAG = AmountCalculatorFragment.class.getName();
 
 	private LayoutInflater inflater;
