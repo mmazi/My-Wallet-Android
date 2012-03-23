@@ -40,10 +40,10 @@ import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.Wallet.BalanceType;
 import com.google.bitcoin.core.WalletEventListener;
 
-import de.schildbach.wallet.WalletApplication;
-import de.schildbach.wallet.Constants;
-import de.schildbach.wallet.ExchangeRatesProvider;
-import de.schildbach.wallet.R;
+import piuk.blockchain.Constants;
+import piuk.blockchain.ExchangeRatesProvider;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach

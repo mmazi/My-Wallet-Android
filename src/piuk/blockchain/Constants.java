@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.schildbach.wallet;
+package piuk.blockchain;
 
 import java.math.BigInteger;
 
@@ -25,7 +25,7 @@ import android.content.Intent;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Utils;
 
-import de.schildbach.wallet.R;
+import piuk.blockchain.R;
 
 /**
  * @author Andreas Schildbach
@@ -37,7 +37,9 @@ public class Constants
 	public static final NetworkParameters NETWORK_PARAMETERS = TEST ? NetworkParameters.testNet() : NetworkParameters.prodNet();
 
 	static final String WALLET_FILENAME = "wallet.aes.json";
-
+	static final String MULTIADDR_FILENAME = "multiaddr.cache.json";
+	public final static long MultiAddrTimeThreshold =  300000; //5 minutes
+	
 	private static final String WALLET_KEY_BACKUP_BASE58_PROD = "key-backup-base58";
 	private static final String WALLET_KEY_BACKUP_BASE58_TEST = "key-backup-base58-testnet";
 	public static final String WALLET_KEY_BACKUP_BASE58 = Constants.TEST ? WALLET_KEY_BACKUP_BASE58_TEST : WALLET_KEY_BACKUP_BASE58_PROD;

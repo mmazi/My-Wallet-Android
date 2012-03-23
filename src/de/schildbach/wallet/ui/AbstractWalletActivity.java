@@ -28,10 +28,10 @@ import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-import de.schildbach.wallet.WalletApplication;
-import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.util.ActionBarFragment;
-import de.schildbach.wallet.R;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach

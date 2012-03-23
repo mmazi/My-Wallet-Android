@@ -22,8 +22,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import piuk.MyRemoteWallet.MyTransactionConfidence;
-import piuk.MyRemoteWallet.MyTransactionInput;
+import piuk.blockchain.Constants;
+
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 import com.google.bitcoin.core.Address;
@@ -37,7 +37,6 @@ import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletTransaction;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 
-import de.schildbach.wallet.Constants;
 
 public class MyTransaction extends Transaction {
 	private static final long serialVersionUID = 1L;

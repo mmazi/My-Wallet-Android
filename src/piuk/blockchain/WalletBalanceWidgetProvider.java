@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.schildbach.wallet;
+package piuk.blockchain;
 
 import java.math.BigInteger;
 
@@ -31,7 +31,7 @@ import com.google.bitcoin.core.Wallet.BalanceType;
 
 import de.schildbach.wallet.ui.WalletActivity;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet.R;
+import piuk.blockchain.R;
 
 /**
  * @author Andreas Schildbach

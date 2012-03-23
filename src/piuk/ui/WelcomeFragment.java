@@ -17,22 +17,12 @@
 
 package piuk.ui;
 
-import com.google.bitcoin.core.Address;
-import com.google.bitcoin.uri.BitcoinURI;
-import com.google.bitcoin.uri.BitcoinURIParseException;
-
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -41,15 +31,9 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import de.schildbach.wallet.AddressBookProvider;
-import de.schildbach.wallet.Constants;
-import de.schildbach.wallet.ui.AbstractWalletActivity;
-import de.schildbach.wallet.ui.EditAddressBookEntryFragment;
 import de.schildbach.wallet.ui.PairWalletActivity;
-import de.schildbach.wallet.ui.PreferencesActivity;
-import de.schildbach.wallet.ui.WalletActivity;
-import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet.R;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach
@@ -58,17 +42,21 @@ public final class WelcomeFragment extends DialogFragment
 {
 	private static final String FRAGMENT_TAG = WelcomeFragment.class.getName();
 
-	private static final String KEY_ADDRESS = "address";
-
-	private String address;
-
 	public static DialogFragment show(final FragmentManager fm)
 	{	
+		
+		
+		final DialogFragment prev = (DialogFragment) fm.findFragmentById(R.layout.welcome_dialog);
+		
 		final FragmentTransaction ft = fm.beginTransaction();
-		final Fragment prev = fm.findFragmentByTag(FRAGMENT_TAG);
-		if (prev != null)
+
+		if (prev != null) {
+			prev.dismiss();
 			ft.remove(prev);
+		}
+		
 		ft.addToBackStack(null);
+		
 		final DialogFragment newFragment = instance();
 
 		newFragment.show(ft, FRAGMENT_TAG);
@@ -98,18 +86,48 @@ public final class WelcomeFragment extends DialogFragment
 
 		final Button pairDeviceButton = (Button) view.findViewById(R.id.pair_device_button);
 		final Button newAccountButton = (Button) view.findViewById(R.id.new_account_button);
+		final TextView welcomeText = (TextView) view.findViewById(R.id.welcome_text);
+
+		final WalletApplication application = (WalletApplication) getActivity().getApplication();
+
+		if (application.getRemoteWallet().isNew()) {
+			welcomeText.setText(R.string.welcome_text_no_account);
+
+			dialog.setCancelable(false);
+		} else {
+			dialog.setCancelable(true);
+
+			welcomeText.setText(R.string.welcome_text_has_account);
+		}
 
 		pairDeviceButton.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {					
+			public void onClick(View v) {	
+				dismiss();
+
+				System.out.println("Start activity");
+				
 				startActivity(new Intent(getActivity(), PairWalletActivity.class));
 			}
 		});
-	
-		newAccountButton.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				dismiss();
-			}
-		});
+
+		if (application.getRemoteWallet().isNew()) {
+
+			newAccountButton.setVisibility(View.VISIBLE);
+
+			newAccountButton.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					try {
+						dismiss();
+
+						NewAccountFragment.show(getFragmentManager());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		} else {
+			newAccountButton.setVisibility(View.GONE);
+		}
 
 		return dialog.create();
 	}

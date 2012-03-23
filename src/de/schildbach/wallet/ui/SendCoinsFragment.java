@@ -22,7 +22,6 @@ import java.math.BigInteger;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -51,13 +50,13 @@ import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Wallet.BalanceType;
 
-import de.schildbach.wallet.AddressBookProvider;
-import de.schildbach.wallet.WalletApplication;
-import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.service.BlockchainService;
 import de.schildbach.wallet.ui.CurrencyAmountView.Listener;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet.R;
+import piuk.blockchain.AddressBookProvider;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach

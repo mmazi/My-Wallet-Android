@@ -34,7 +34,7 @@ import android.widget.ImageView.ScaleType;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
-import de.schildbach.wallet.R;
+import piuk.blockchain.R;
 
 /**
  * @author Andreas Schildbach
@@ -85,6 +85,14 @@ public final class ActionBarFragment extends Fragment
 	{
 		backButtonView.setOnClickListener(onClickListener);
 		backView.setVisibility(View.VISIBLE);
+	}
+
+	public TextView getPrimaryTitleView() {
+		return primaryTitleView;
+	}
+
+	public void setPrimaryTitleView(TextView primaryTitleView) {
+		this.primaryTitleView = primaryTitleView;
 	}
 
 	public void setPrimaryTitle(final CharSequence title)

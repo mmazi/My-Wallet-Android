@@ -30,7 +30,8 @@ import java.util.Formatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.schildbach.wallet.Constants;
+import piuk.blockchain.Constants;
+
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;

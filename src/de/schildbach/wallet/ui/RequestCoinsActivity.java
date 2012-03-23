@@ -24,7 +24,7 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.webkit.WebView;
 import de.schildbach.wallet.util.ActionBarFragment;
-import de.schildbach.wallet.R;
+import piuk.blockchain.R;
 
 /**
  * @author Andreas Schildbach

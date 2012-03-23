@@ -15,17 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.schildbach.wallet;
+package piuk.blockchain;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.CookieHandler;
+import java.net.CookieManager;
 import java.util.ArrayList;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 
 import piuk.MyRemoteWallet;
+import piuk.blockchain.R;
 
 import android.app.Application;
 import android.appwidget.AppWidgetManager;
@@ -90,16 +93,21 @@ public class WalletApplication extends Application
 
 		ErrorReporter.getInstance().init(this);
 
+		//Need to save session cookie for kaptcha
+		CookieManager cookieManager = new CookieManager();
+
+		CookieHandler.setDefault(cookieManager);
+
 		//If the User has a saved GUID then we can restore the wallet
 		if (getGUID() != null) {
-			
+
 			//Try and read the wallet from the local cache
 			if (readLocalWallet()) {
 				syncWithMyWallet();
 			} else {
-				
+
 				System.out.println("Loading remote");
-				
+
 				Toast.makeText(WalletApplication.this, R.string.toast_downloading_wallet, Toast.LENGTH_LONG).show();
 
 				loadRemoteWallet();
@@ -110,7 +118,7 @@ public class WalletApplication extends Application
 		if (remoteWallet == null) {
 			try {
 				this.remoteWallet = new MyRemoteWallet();
-				
+
 				Toast.makeText(WalletApplication.this, R.string.toast_generated_new_wallet, Toast.LENGTH_LONG).show();
 			} catch (Exception e) {
 				throw new Error("Could not create wallet ", e);
@@ -123,7 +131,7 @@ public class WalletApplication extends Application
 	public Wallet getWallet() {
 		return remoteWallet.getBitcoinJWallet();
 	}
-	
+
 	public MyRemoteWallet getRemoteWallet() {
 		return remoteWallet;
 	}
@@ -157,17 +165,31 @@ public class WalletApplication extends Application
 			}
 		}
 	}
-	private void syncWithMyWallet() {			
+
+	public synchronized void writeMultiAddrCache(String repsonse) {
+		try {
+			FileOutputStream file = openFileOutput(remoteWallet.getGUID() + Constants.MULTIADDR_FILENAME, Constants.WALLET_MODE);
+
+			file.write(repsonse.getBytes());
+			
+			file.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private synchronized void syncWithMyWallet() {			
 		new Thread(new Runnable() {
 			public void run() {
 				try {					
 					remoteWallet.sync();
 
-					remoteWallet.doMultiAddr();
+					writeMultiAddrCache(remoteWallet.doMultiAddr());
 
 				} catch (Exception e) {
 					e.printStackTrace();
-					
+
 					handler.post(new Runnable()
 					{
 						public void run()
@@ -184,20 +206,36 @@ public class WalletApplication extends Application
 		new Thread(new Runnable() {
 			public void run() {
 				try {
-					remoteWallet = MyRemoteWallet.getWallet(getGUID(), getSharedKey(), getPassword());
-					saveWallet();
+					MyRemoteWallet newRemoteWallet = MyRemoteWallet.getWallet(getGUID(), getSharedKey(), getPassword());
+					MyRemoteWallet oldRemoteWallet = remoteWallet;
+				
+					remoteWallet = newRemoteWallet;
+					
+					//Copy the vent listeners
+					if (remoteWallet != null) {						
+						newRemoteWallet.getBitcoinJWallet().eventListeners.addAll(oldRemoteWallet.getBitcoinJWallet().eventListeners);
 
-					for(Entry<String, String> labelObj : remoteWallet.getLabelMap().entrySet()) {
-						AddressBookProvider.setLabel(getContentResolver(), labelObj.getKey(), labelObj.getValue());
+						oldRemoteWallet.getBitcoinJWallet().invokeOnChange();
+						
+						oldRemoteWallet.getBitcoinJWallet().eventListeners.clear();
 					}
 					
+					saveWallet();
+
+					//Copy our labels into the address book
+					if (remoteWallet.getLabelMap() != null) {
+						for(Entry<String, String> labelObj : remoteWallet.getLabelMap().entrySet()) {
+							AddressBookProvider.setLabel(getContentResolver(), labelObj.getKey(), labelObj.getValue());
+						}
+					}
+
 					new Thread(new Runnable() {
 						public void run() {
 							try {					
-								remoteWallet.doMultiAddr();		
+								writeMultiAddrCache(remoteWallet.doMultiAddr());
 							} catch (Exception e) {
 								e.printStackTrace();
-								
+
 								handler.post(new Runnable()
 								{
 									public void run()
@@ -237,14 +275,27 @@ public class WalletApplication extends Application
 
 	public boolean readLocalWallet() {
 		try {
+
+			//Read the wallet from local file
 			FileInputStream file = openFileInput(Constants.WALLET_FILENAME);
 
-			String payload =  IOUtils.toString(file, "UTF-8");
+			String payload =  IOUtils.toString(file);
 
 			this.remoteWallet = new MyRemoteWallet(payload, getPassword());
 
-			return true;
+			try {
+				//Restore the multi address cache
+				FileInputStream multiaddrCacheFile = openFileInput(remoteWallet.getGUID() +  Constants.MULTIADDR_FILENAME);
 
+				String multiAddr =  IOUtils.toString(multiaddrCacheFile);
+
+				remoteWallet.parseMultiAddr(multiAddr);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 
@@ -268,9 +319,7 @@ public class WalletApplication extends Application
 		try {
 			FileOutputStream file = openFileOutput(Constants.WALLET_FILENAME, Constants.WALLET_MODE);
 
-			byte[] payload = remoteWallet.getPayload(getPassword()).getBytes("UTF-8");
-
-			file.write(payload);
+			file.write(remoteWallet.getPayload().getBytes());
 
 			file.close();
 		} catch (Exception e) {

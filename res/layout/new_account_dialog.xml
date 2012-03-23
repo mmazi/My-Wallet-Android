@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:background="#fff"
+	android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/TextView01"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="0.50"
+        android:text="@string/password"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/less_significant" />
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_weight="0.50"
+        android:inputType="textPassword" />
+
+        <requestFocus />
+
+    <TextView
+        android:id="@+id/TextView02"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_weight="0.50"
+        android:text="@string/password_confirm"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/less_significant" />
+
+    <EditText
+        android:id="@+id/password2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_weight="0.50"
+        android:inputType="textPassword" >
+    </EditText>
+
+    <ImageView
+        android:id="@+id/captcha_image"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_weight="50.20"
+        android:contentDescription="@string/captcha_code"
+        android:src="@android:drawable/ic_menu_view" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_weight="0.50"
+        android:text="@string/captcha"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/less_significant" />
+
+    <EditText
+        android:id="@+id/captcha"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_weight="0.50"
+        android:inputType="textPassword" />
+
+    <FrameLayout
+        android:id="@+id/frameLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.50"
+        android:background="@color/significant" >
+
+        <Button
+            android:id="@+id/create_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|center_vertical|top"
+            android:layout_margin="8dp"
+            android:text="@string/create_account" />
+
+    </FrameLayout>
+
+</LinearLayout>

@@ -23,9 +23,9 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
-import de.schildbach.wallet.WalletApplication;
-import de.schildbach.wallet.Constants;
-import de.schildbach.wallet.R;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach

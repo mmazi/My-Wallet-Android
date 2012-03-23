@@ -41,14 +41,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.uri.BitcoinURI;
 
-import de.schildbach.wallet.AddressBookProvider;
-import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.util.QrDialog;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet.R;
+import piuk.blockchain.AddressBookProvider;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
 
 /**
  * @author Andreas Schildbach

@@ -46,11 +46,11 @@ import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.Wallet.BalanceType;
 import com.google.bitcoin.core.WalletEventListener;
 
-import de.schildbach.wallet.WalletApplication;
-import de.schildbach.wallet.Constants;
-import de.schildbach.wallet.ExchangeRatesProvider;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet.R;
+import piuk.blockchain.Constants;
+import piuk.blockchain.ExchangeRatesProvider;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach
@@ -58,7 +58,6 @@ import de.schildbach.wallet.R;
 public final class WalletBalanceFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
 {
 	private WalletApplication application;
-	private Wallet wallet;
 	private SharedPreferences prefs;
 	private final Handler handler = new Handler();
 
@@ -89,8 +88,7 @@ public final class WalletBalanceFragment extends Fragment implements LoaderManag
 		application = (WalletApplication) activity.getApplication();
 		prefs = PreferenceManager.getDefaultSharedPreferences(activity);
 
-		wallet = application.getWallet();
-		wallet.addEventListener(walletEventListener);
+		application.getWallet().addEventListener(walletEventListener);
 	}
 
 	@Override
@@ -140,14 +138,14 @@ public final class WalletBalanceFragment extends Fragment implements LoaderManag
 	@Override
 	public void onDestroy()
 	{
-		wallet.removeEventListener(walletEventListener);
+		application.getWallet().removeEventListener(walletEventListener);
 
 		super.onDestroy();
 	}
 
 	public void updateView()
 	{
-		viewBalance.setAmount(wallet.getBalance(BalanceType.ESTIMATED));
+		viewBalance.setAmount(application.getWallet().getBalance(BalanceType.ESTIMATED));
 
 		getLoaderManager().restartLoader(0, null, this);
 	}
@@ -185,7 +183,7 @@ public final class WalletBalanceFragment extends Fragment implements LoaderManag
 			if (application.getWallet().getBalance(BalanceType.ESTIMATED).signum() > 0 && exchangeRate != null)
 			{
 				final String exchangeCurrency = prefs.getString(Constants.PREFS_KEY_EXCHANGE_CURRENCY, Constants.DEFAULT_EXCHANGE_CURRENCY);
-				final BigInteger balance = wallet.getBalance(BalanceType.ESTIMATED);
+				final BigInteger balance = application.getWallet().getBalance(BalanceType.ESTIMATED);
 				final BigInteger valueLocal = new BigDecimal(balance).multiply(new BigDecimal(exchangeRate)).toBigInteger();
 				viewBalanceLocal.setVisibility(View.VISIBLE);
 				viewBalanceLocal.setText(getString(R.string.wallet_balance_fragment_local_value, exchangeCurrency,

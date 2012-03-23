@@ -27,6 +27,8 @@ import java.util.Date;
  */
 public class Iso8601Format extends SimpleDateFormat
 {
+	private static final long serialVersionUID = 1L;
+
 	private Iso8601Format(String formatString)
 	{
 		super(formatString);

@@ -10,8 +10,23 @@
 	<string name="toast_downloading_wallet">Downloading wallet.</string>
 	<string name="toast_error_downloading_transactions">Error downloading transactions.</string>
 	<string name="toast_error_syncing_wallet">Error syncing wallet.</string>
+	<string name="toast_error_downloading_captcha">Error downloading captcha.</string>
 	
 	<string name="error_pairing_wallet">Error pairing wallet.</string>
+	
+	<string name="new_account_password_length_error">Password must be between 10 and 255 characters</string>
+	<string name="new_account_password_mismatch_error">Passwords do not match</string>
+	<string name="new_account_kaptcha_error">Captcha code incorrect</string>
+	<string name="new_account_no_kaptcha_error">You must enter a captcha code</string>
+	<string name="new_account_success">New account successfully created</string>
+	
+	<string name="new_account_title">New account</string>
+	<string name="password">Password:</string>
+	<string name="password_confirm">Confirm Password:</string>
+	<string name="captcha">Captcha:</string>
+	<string name="captcha_code">Please type the captcha code</string>
+	<string name="create_account">Create Account</string>
+	<string name="creating_account">Creating new account. Please Wait</string>
 	
 	<string name="blockchain_state_disclaimer">Use at your own risk. Read the safety notes.</string>
 	<string name="blockchain_state_message_hours">Blockchain %1$s, %2$d hours behind</string>
@@ -101,7 +116,13 @@
 	<string name="address_book_msg_clipboard_empty">Clipboard is empty</string>
 
 	<string name="welcome_title">Welcome</string>
-	<string name="welcome_text">If you already have a My wallet account press the pair device button to login. Otherwise please create a new account. It\'s Free!</string>
+	<string name="welcome_text_no_account">If you already have a My wallet account press the pair device button to login. Otherwise please create a new account. It\'s Free!</string>
+	<string name="welcome_text_has_account">You already have a My Wallet account paired with your device. If you would like to use a different account press the pair device button to login.</string>
+	
+	
+	<string name="should_not_be_here">You should not be here. This is a bug</string>
+	<string name="pair_wallet_title">Pair Wallet.</string>
+	
 	<string name="welcome_pair_device_button">Pair Device</string>
 	<string name="welcome_new_account_button">New Account</string>
 	

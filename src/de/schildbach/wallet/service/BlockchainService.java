@@ -54,11 +54,11 @@ import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletEventListener;
 import com.google.bitcoin.store.BlockStoreException;
 import de.roderick.weberknecht.WebSocketException;
-import de.schildbach.wallet.WalletApplication;
-import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.ui.WalletActivity;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet.R;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach
@@ -91,6 +91,7 @@ public class BlockchainService extends android.app.Service
 	private int notificationCount = 0;
 	private BigInteger notificationAccumulatedAmount = BigInteger.ZERO;
 	private final List<Address> notificationAddresses = new LinkedList<Address>();
+	public boolean firstLaunch = true;
 
 	private final WalletEventListener walletEventListener = new AbstractWalletEventListener()
 	{
@@ -295,6 +296,24 @@ public class BlockchainService extends android.app.Service
 			if (hasEverything) {
 				blockChain.addPeerEventListener(peerEventListener);
 
+				System.out.println("Connect");
+				
+				if (!firstLaunch && !blockChain.getRemoteWallet().isUptoDate(Constants.MultiAddrTimeThreshold)) {
+					new Thread(){
+						@Override
+						public void run() {
+							try {
+								blockChain.getRemoteWallet().doMultiAddr();
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
+						
+					}.start();
+					
+					firstLaunch = false;
+				}
+				
 				blockChain.start();
 			}
 			
@@ -370,6 +389,7 @@ public class BlockchainService extends android.app.Service
 		unregisterReceiver(broadcastReceiver);
 
 		removeBroadcastPeerState();
+		
 		removeBroadcastBlockchainState();
 
 		delayHandler.removeCallbacksAndMessages(null);

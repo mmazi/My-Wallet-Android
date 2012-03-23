@@ -44,9 +44,9 @@ import android.widget.TextView.OnEditorActionListener;
 
 import com.google.bitcoin.core.Utils;
 
-import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet.R;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
 
 /**
  * @author Andreas Schildbach

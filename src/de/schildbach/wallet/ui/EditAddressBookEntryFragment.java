@@ -21,7 +21,6 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,10 +32,10 @@ import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
-import de.schildbach.wallet.AddressBookProvider;
-import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet.R;
+import piuk.blockchain.AddressBookProvider;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
 
 /**
  * @author Andreas Schildbach

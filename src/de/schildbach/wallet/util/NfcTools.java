@@ -20,12 +20,13 @@ package de.schildbach.wallet.util;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
+import piuk.blockchain.Constants;
+
 import android.app.Activity;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcManager;
-import de.schildbach.wallet.Constants;
 
 /**
  * @author Andreas Schildbach

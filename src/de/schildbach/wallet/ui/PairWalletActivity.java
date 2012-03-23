@@ -2,39 +2,32 @@ package de.schildbach.wallet.ui;
 
 import java.util.regex.Pattern;
 
-import com.google.bitcoin.core.Address;
-import com.google.bitcoin.uri.BitcoinURI;
-import com.google.bitcoin.uri.BitcoinURIParseException;
-
-import de.schildbach.wallet.Constants;
-import de.schildbach.wallet.R;
-import de.schildbach.wallet.WalletApplication;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 import de.schildbach.wallet.util.ActionBarFragment;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.view.View;
-import android.view.View.OnClickListener;
 
 public class PairWalletActivity extends AbstractWalletActivity {
 	private static final int REQUEST_CODE_SCAN = 0;
-	private static final int DIALOG_HELP = 0;
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.request_coins_content);
+		setContentView(R.layout.pair_wallet_content);
 
 		final ActionBarFragment actionBar = getActionBar();
 
-		actionBar.setPrimaryTitle(R.string.request_coins_activity_title);
-
-		showQRReader();
-
+		actionBar.setPrimaryTitle(R.string.pair_wallet_title);
+		
+		showQRReader();	
 	}
+	
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, final Intent intent)
 	{
@@ -78,15 +71,23 @@ public class PairWalletActivity extends AbstractWalletActivity {
 			edit.putString("password", password);
 
 			if (edit.commit()) {
-				WalletApplication application = (WalletApplication) getApplication();
+				final WalletApplication application = (WalletApplication) getApplication();
 
-				application.loadRemoteWallet();
-
-				startActivity(new Intent(this, WalletActivity.class));
+				new Thread() {
+					public void run() {
+						try {
+							application.loadRemoteWallet();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				}.start();
 			} else {
 				errorDialog(R.string.error_pairing_wallet, "Error saving preferences");
 			}
 		}
+
+		finish();
 	}
 	public void showQRReader() {
 		if (getPackageManager().resolveActivity(Constants.INTENT_QR_SCANNER, 0) != null)

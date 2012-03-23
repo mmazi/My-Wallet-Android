@@ -33,9 +33,9 @@ import com.google.bitcoin.core.Address;
 import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.uri.BitcoinURIParseException;
 
-import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.util.ActionBarFragment;
-import de.schildbach.wallet.R;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
 
 /**
  * @author Andreas Schildbach

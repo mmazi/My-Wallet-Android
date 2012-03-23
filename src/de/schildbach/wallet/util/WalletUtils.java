@@ -20,6 +20,8 @@ package de.schildbach.wallet.util;
 import java.math.BigInteger;
 import java.util.Hashtable;
 
+import piuk.blockchain.Constants;
+
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.text.Editable;
@@ -36,7 +38,6 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
-import de.schildbach.wallet.Constants;
 
 /**
  * @author Andreas Schildbach

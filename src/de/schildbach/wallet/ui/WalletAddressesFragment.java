@@ -47,13 +47,13 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.uri.BitcoinURI;
 
-import de.schildbach.wallet.AddressBookProvider;
-import de.schildbach.wallet.Constants;
-import de.schildbach.wallet.DetermineFirstSeenThread;
-import de.schildbach.wallet.WalletApplication;
 import de.schildbach.wallet.util.QrDialog;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet.R;
+import piuk.blockchain.AddressBookProvider;
+import piuk.blockchain.Constants;
+import piuk.blockchain.DetermineFirstSeenThread;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach

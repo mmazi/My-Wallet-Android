@@ -36,9 +36,9 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
-import de.schildbach.wallet.Constants;
-import de.schildbach.wallet.ExchangeRatesProvider;
-import de.schildbach.wallet.R;
+import piuk.blockchain.Constants;
+import piuk.blockchain.ExchangeRatesProvider;
+import piuk.blockchain.R;
 
 /**
  * @author Andreas Schildbach

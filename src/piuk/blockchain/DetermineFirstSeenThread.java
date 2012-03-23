@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.schildbach.wallet;
+package piuk.blockchain;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

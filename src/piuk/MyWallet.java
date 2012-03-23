@@ -42,6 +42,8 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.lang.ArrayUtils; 
 import org.json.simple.JSONValue; 
 
+import piuk.blockchain.Constants;
+
 import android.util.Base64;
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
@@ -53,7 +55,6 @@ import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Wallet; 
 
-import de.schildbach.wallet.Constants;
 
 public class MyWallet {
 	private static final int AESBlockSize = 4;
@@ -61,7 +62,7 @@ public class MyWallet {
 	public Map<String, Object> root;
 	public String temporyPassword;
 	public String temporySecondPassword;
-	
+
 	public static final NetworkParameters params = NetworkParameters.prodNet();
 
 	public MyWallet(String base64Payload, String password) throws Exception {
@@ -70,13 +71,13 @@ public class MyWallet {
 		if (root == null)
 			throw new Exception("Error Decrypting Wallet");
 	}
-	
+
 	//Create a new Wallet 
 	public MyWallet() throws Exception {
 		this.root = new HashMap<String, Object>();
-	
-		root.put("guid", UUID.randomUUID());
-		root.put("sharedKey", UUID.randomUUID());
+
+		root.put("guid", UUID.randomUUID().toString());
+		root.put("sharedKey", UUID.randomUUID().toString());
 
 		List<Map<String, Object>> keys = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> address_book = new ArrayList<Map<String, Object>>();
@@ -86,7 +87,7 @@ public class MyWallet {
 
 		addKey(new ECKey(), "New");
 	}
-	
+
 	public static class EncodedECKey extends ECKey {
 		private static final long serialVersionUID = 1L;
 		private final String addr;
@@ -96,12 +97,12 @@ public class MyWallet {
 
 		public EncodedECKey(String addr, String base58, MyWallet wallet) {
 			super((BigInteger)null, null);
-			
+
 			this.base58 = base58;
 			this.addr = addr;
 			this.wallet = wallet;
 		}
-		
+
 		private ECKey getInternalKey() {
 			if (_key == null) {
 				try {
@@ -110,56 +111,56 @@ public class MyWallet {
 					e.printStackTrace();
 				}
 			}
-			
+
 			return _key;
 		}
-		
+
 		@Override
-	    public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
+		public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
 			return getInternalKey().getPrivateKeyEncoded(params);
 		}
-		
+
 		@Override
 		public boolean verify(byte[] data, byte[] signature) {
 			return getInternalKey().verify(data, signature);
 		}
 		@Override
-	    public byte[] sign(byte[] input) {
+		public byte[] sign(byte[] input) {
 			return getInternalKey().sign(input);
 		}
-		
+
 		@Override
 		public byte[] getPubKey() {
 			return getInternalKey().getPubKey();
-	    }
-		
-	    @Override
-	    public byte[] toASN1() {
+		}
+
+		@Override
+		public byte[] toASN1() {
 			return getInternalKey().toASN1();
-	    }
-	    
-	    @Override
+		}
+
+		@Override
 		public byte[] getPrivKeyBytes() {
 			return getInternalKey().getPrivKeyBytes();
-	    }
-		
-		 /** Gets the hash160 form of the public key (as seen in addresses). */
-	    public byte[] getPubKeyHash() {
-	    	return toAddress(Constants.NETWORK_PARAMETERS).getHash160();
-	    }
-	    
+		}
+
+		/** Gets the hash160 form of the public key (as seen in addresses). */
+		public byte[] getPubKeyHash() {
+			return toAddress(Constants.NETWORK_PARAMETERS).getHash160();
+		}
+
 		@Override
 		public Address toAddress(NetworkParameters params) {
-		      try {
+			try {
 				return new Address(params, addr);
 			} catch (AddressFormatException e) {
 				e.printStackTrace();
 			}
-		      
-		    return null;
+
+			return null;
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public List<Map<String, Object>> getKeysMap() {
 		return (List<Map<String, Object>>) root.get("keys");
@@ -176,7 +177,7 @@ public class MyWallet {
 	public String getGUID() {
 		return (String)root.get("guid");
 	}
-	
+
 	public String getSharedKey() {
 		return (String)root.get("sharedKey");
 	}
@@ -188,7 +189,7 @@ public class MyWallet {
 	public void setTemporyPassword(String password) {
 		this.temporyPassword = password;
 	}
-	
+
 	public void setTemporySecondPassword(String secondPassword) {
 		this.temporySecondPassword = secondPassword;
 	}
@@ -197,8 +198,8 @@ public class MyWallet {
 		return JSONValue.toJSONString(root);
 	}
 
-	public String getPayload(String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException {
-		return encrypt(toJSONString(), password);
+	public String getPayload() throws Exception {
+		return encrypt(toJSONString(), this.temporyPassword);
 	}
 
 	public ECKey decodePK(String base58Priv) throws Exception {
@@ -206,8 +207,6 @@ public class MyWallet {
 
 			if (this.temporySecondPassword == null)
 				throw new Exception("You must provide a second password");
-
-			System.out.println(temporySecondPassword);
 
 			base58Priv = decryptPK(base58Priv, getSharedKey(), this.temporySecondPassword);
 		} 
@@ -227,24 +226,29 @@ public class MyWallet {
 		Map<String, String> _labelMap = new HashMap<String, String>();
 
 		List<Map<String, Object>> addressBook = (List<Map<String, Object>>)root.get("address_book");
-		for (Map<String, Object> addr_book : addressBook) {
-			_labelMap.put((String)addr_book.get("addr"), (String)addr_book.get("label"));
+
+		if (addressBook != null) {
+			for (Map<String, Object> addr_book : addressBook) {
+				_labelMap.put((String)addr_book.get("addr"), (String)addr_book.get("label"));
+			}
 		}
 
-		for (Map<String, Object> key_map : this.getKeysMap()) {
-			String label = (String)key_map.get("label");
+		if (this.getKeysMap() != null) {
+			for (Map<String, Object> key_map : this.getKeysMap()) {
+				String label = (String)key_map.get("label");
 
-			if (label != null)
-				_labelMap.put((String)key_map.get("addr"), label);
+				if (label != null)
+					_labelMap.put((String)key_map.get("addr"), label);
+			}
 		}
 
 		return _labelMap;
 	}
-	
+
 	protected void addKeysTobitoinJWallet(Wallet wallet) throws Exception {
-		
+
 		wallet.keychain.clear();
-		
+
 		for (Map<String, Object> key : this.getKeysMap()) {
 
 			String base58Priv = (String) key.get("priv");
@@ -315,7 +319,7 @@ public class MyWallet {
 	//AES 256 PBKDF2 CBC iso10126 decryption
 	//16 byte IV must be prepended to ciphertext - Compatible with crypto-js
 	public static String decrypt(String ciphertext, String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException{
-		byte[] cipherdata = Base64.decode(ciphertext, Base64.DEFAULT);
+		byte[] cipherdata = Base64.decode(ciphertext, Base64.NO_WRAP);
 
 		//Sperate the IV and cipher data
 		byte[] iv = Arrays.copyOfRange(cipherdata, 0, AESBlockSize * 4);
@@ -343,7 +347,10 @@ public class MyWallet {
 	}
 
 	//Encrypt compatible with crypto-js
-	public static String encrypt(String text, String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException{
+	public static String encrypt(String text, String password) throws Exception{
+
+		if (password == null)
+			throw new Exception("You must provide an ecryption password");
 
 		//Use secure random to generate a 16 byte iv
 		SecureRandom random = new SecureRandom();
@@ -368,7 +375,7 @@ public class MyWallet {
 			//Append to IV to the output
 			byte[] ivAppended = ArrayUtils.addAll(iv, output);
 
-			return new String(Base64.encode(ivAppended, Base64.DEFAULT), "UTF-8");
+			return new String(Base64.encode(ivAppended, Base64.NO_WRAP), "UTF-8");
 
 		} catch(Exception e){
 			e.printStackTrace();
@@ -382,7 +389,7 @@ public class MyWallet {
 	}
 
 	//Decrypt a double encrypted private key
-	public static String encryptPK(String key, String sharedKey, String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException {
+	public static String encryptPK(String key, String sharedKey, String password) throws Exception {
 		return encrypt(key, sharedKey + password);
 	}
 
@@ -391,8 +398,6 @@ public class MyWallet {
 	public static Map<String, Object> decryptPayload(String payload, String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException {
 		if (payload == null || payload.length() == 0 || password == null || password.length() == 0)
 			return null;
-
-		System.out.println("Decrypt " + payload + " Password " + password);
 
 		String decrypted = decrypt(payload, password);
 

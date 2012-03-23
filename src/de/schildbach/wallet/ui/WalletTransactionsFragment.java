@@ -64,12 +64,12 @@ import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletEventListener;
 
-import de.schildbach.wallet.AddressBookProvider;
-import de.schildbach.wallet.WalletApplication;
 import de.schildbach.wallet.service.BlockchainService;
 import de.schildbach.wallet.util.CircularProgressView;
 import de.schildbach.wallet.util.ViewPagerTabs;
-import de.schildbach.wallet.R;
+import piuk.blockchain.AddressBookProvider;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach
@@ -120,13 +120,13 @@ public final class WalletTransactionsFragment extends Fragment
 
 	private static class TransactionsLoader extends AsyncTaskLoader<List<Transaction>>
 	{
-		private final Wallet wallet;
+		private final WalletApplication application;
 
-		private TransactionsLoader(final Context context, final Wallet wallet)
+		private TransactionsLoader(final Context context, final WalletApplication application)
 		{
 			super(context);
 
-			this.wallet = wallet;
+			this.application = application;
 		}
 
 		@Override
@@ -134,7 +134,7 @@ public final class WalletTransactionsFragment extends Fragment
 		{
 			super.onStartLoading();
 
-			wallet.addEventListener(walletEventListener);
+			application.getWallet().addEventListener(walletEventListener);
 
 			forceLoad();
 		}
@@ -142,7 +142,7 @@ public final class WalletTransactionsFragment extends Fragment
 		@Override
 		protected void onStopLoading()
 		{
-			wallet.removeEventListener(walletEventListener);
+			application.getWallet().removeEventListener(walletEventListener);
 
 			super.onStopLoading();
 		}
@@ -150,7 +150,7 @@ public final class WalletTransactionsFragment extends Fragment
 		@Override
 		public List<Transaction> loadInBackground()
 		{
-			final List<Transaction> transactions = new ArrayList<Transaction>(wallet.getTransactions(true, false));
+			final List<Transaction> transactions = new ArrayList<Transaction>(application.getWallet().getTransactions(true, false));
 
 			Collections.sort(transactions, TRANSACTION_COMPARATOR);
 
@@ -190,7 +190,6 @@ public final class WalletTransactionsFragment extends Fragment
 	public static class ListFragment extends android.support.v4.app.ListFragment implements LoaderCallbacks<List<Transaction>>
 	{
 		private WalletApplication application;
-		private Wallet wallet;
 		private Activity activity;
 		private ArrayAdapter<Transaction> adapter;
 
@@ -240,7 +239,6 @@ public final class WalletTransactionsFragment extends Fragment
 
 			this.activity = activity;
 			application = (WalletApplication) activity.getApplication();
-			wallet = application.getWallet();
 		}
 
 		@Override
@@ -271,7 +269,7 @@ public final class WalletTransactionsFragment extends Fragment
 
 					try
 					{
-						final BigInteger value = tx.getValue(wallet);
+						final BigInteger value = tx.getValue(application.getWallet());
 						final boolean sent = value.signum() < 0;
 
 						final CircularProgressView rowConfidenceCircular = (CircularProgressView) row
@@ -472,7 +470,7 @@ public final class WalletTransactionsFragment extends Fragment
 		{
 			try
 			{
-				final boolean sent = tx.getValue(wallet).signum() < 0;
+				final boolean sent = tx.getValue(application.getWallet()).signum() < 0;
 				final Address address = sent ? tx.getOutputs().get(0).getScriptPubKey().getToAddress() : tx.getInputs().get(0).getFromAddress();
 
 				EditAddressBookEntryFragment.edit(getFragmentManager(), address.toString());
@@ -486,7 +484,7 @@ public final class WalletTransactionsFragment extends Fragment
 
 		public Loader<List<Transaction>> onCreateLoader(final int id, final Bundle args)
 		{
-			return new TransactionsLoader(activity, wallet);
+			return new TransactionsLoader(activity, application);
 		}
 
 		public void onLoadFinished(final Loader<List<Transaction>> loader, final List<Transaction> transactions)
@@ -497,7 +495,7 @@ public final class WalletTransactionsFragment extends Fragment
 			{
 				for (final Transaction tx : transactions)
 				{
-					final boolean sent = tx.getValue(wallet).signum() < 0;
+					final boolean sent = tx.getValue(application.getWallet()).signum() < 0;
 					if ((mode == 0 && !sent) || mode == 1 || (mode == 2 && sent))
 						adapter.add(tx);
 				}

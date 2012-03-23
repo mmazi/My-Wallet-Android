@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import org.json.simple.JSONValue;
 
 import piuk.MyTransaction.MyTransactionOutput;
-import piuk.MyRemoteWallet.MyTransactionInput;
+import piuk.blockchain.Constants;
 
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
@@ -37,7 +37,6 @@ import com.google.bitcoin.core.Block;
 import com.google.bitcoin.core.BlockChain;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.Peer;
 import com.google.bitcoin.core.PeerEventListener;
 import com.google.bitcoin.core.ProtocolException;
 import com.google.bitcoin.core.Sha256Hash;
@@ -55,7 +54,6 @@ import de.roderick.weberknecht.WebSocketConnection;
 import de.roderick.weberknecht.WebSocketEventHandler;
 import de.roderick.weberknecht.WebSocketException;
 import de.roderick.weberknecht.WebSocketMessage;
-import de.schildbach.wallet.Constants;
 
 public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	final String URL = "ws://api.blockchain.info:8335/inv";
@@ -65,6 +63,10 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	StoredBlock latestBlock;
 	boolean isConnected = false;
 	
+	public MyRemoteWallet getRemoteWallet() {
+		return remoteWallet;
+	}
+
 	public static class MyBlock extends Block {
 		private static final long serialVersionUID = 1L;
 		

@@ -37,12 +37,12 @@ import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.VerificationException;
 import com.google.bitcoin.core.Wallet;
 
-import de.schildbach.wallet.WalletApplication;
-import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.util.ActionBarFragment;
 import de.schildbach.wallet.util.Base43;
 import de.schildbach.wallet.util.NfcTools;
-import de.schildbach.wallet.R;
+import piuk.blockchain.Constants;
+import piuk.blockchain.R;
+import piuk.blockchain.WalletApplication;
 
 /**
  * @author Andreas Schildbach
