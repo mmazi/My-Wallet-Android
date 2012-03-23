@@ -22,8 +22,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import piuk.RemoteMyWallet.MyTransactionConfidence;
-import piuk.RemoteMyWallet.MyTransactionInput;
+import piuk.MyRemoteWallet.MyTransactionConfidence;
+import piuk.MyRemoteWallet.MyTransactionInput;
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 import com.google.bitcoin.core.Address;

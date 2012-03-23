@@ -25,7 +25,7 @@ import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 
-import piuk.RemoteMyWallet;
+import piuk.MyRemoteWallet;
 
 import android.app.Application;
 import android.appwidget.AppWidgetManager;
@@ -51,7 +51,7 @@ import de.schildbach.wallet.util.StrictModeWrapper;
  */
 public class WalletApplication extends Application
 {
-	private RemoteMyWallet remoteWallet;
+	private MyRemoteWallet remoteWallet;
 
 	private final Handler handler = new Handler();
 
@@ -109,7 +109,7 @@ public class WalletApplication extends Application
 		//Otherwise wither first load or an error
 		if (remoteWallet == null) {
 			try {
-				this.remoteWallet = new RemoteMyWallet();
+				this.remoteWallet = new MyRemoteWallet();
 				
 				Toast.makeText(WalletApplication.this, R.string.toast_generated_new_wallet, Toast.LENGTH_LONG).show();
 			} catch (Exception e) {
@@ -122,6 +122,10 @@ public class WalletApplication extends Application
 
 	public Wallet getWallet() {
 		return remoteWallet.getBitcoinJWallet();
+	}
+	
+	public MyRemoteWallet getRemoteWallet() {
+		return remoteWallet;
 	}
 
 	public String getPassword() {
@@ -162,7 +166,15 @@ public class WalletApplication extends Application
 					remoteWallet.doMultiAddr();
 
 				} catch (Exception e) {
-					throw new Error("Error Downloading Wallet ", e);
+					e.printStackTrace();
+					
+					handler.post(new Runnable()
+					{
+						public void run()
+						{
+							Toast.makeText(WalletApplication.this, R.string.toast_error_syncing_wallet, Toast.LENGTH_LONG).show();
+						}
+					});
 				}
 			}
 		}).start();
@@ -172,7 +184,7 @@ public class WalletApplication extends Application
 		new Thread(new Runnable() {
 			public void run() {
 				try {
-					remoteWallet = RemoteMyWallet.getWallet(getGUID(), getSharedKey(), getPassword());
+					remoteWallet = MyRemoteWallet.getWallet(getGUID(), getSharedKey(), getPassword());
 					saveWallet();
 
 					for(Entry<String, String> labelObj : remoteWallet.getLabelMap().entrySet()) {
@@ -184,7 +196,15 @@ public class WalletApplication extends Application
 							try {					
 								remoteWallet.doMultiAddr();		
 							} catch (Exception e) {
-								throw new Error("Error Downloading Wallet ", e);
+								e.printStackTrace();
+								
+								handler.post(new Runnable()
+								{
+									public void run()
+									{
+										Toast.makeText(WalletApplication.this, R.string.toast_error_downloading_transactions, Toast.LENGTH_LONG).show();
+									}
+								});
 							}
 						}
 					}).start();
@@ -221,7 +241,7 @@ public class WalletApplication extends Application
 
 			String payload =  IOUtils.toString(file, "UTF-8");
 
-			this.remoteWallet = new RemoteMyWallet(payload, getPassword());
+			this.remoteWallet = new MyRemoteWallet(payload, getPassword());
 
 			return true;
 

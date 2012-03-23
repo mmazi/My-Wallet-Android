@@ -62,10 +62,4 @@
 		</LinearLayout>
 	</FrameLayout>
 
-	<fragment
-		android:id="@+id/blockchain_state_fragment"
-		android:name="de.schildbach.wallet.ui.BlockchainStateFragment"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
-
 </LinearLayout>

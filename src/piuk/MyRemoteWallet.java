@@ -29,25 +29,30 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONValue;
 
+import piuk.MyBlockChain.MyBlock;
+
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.Sha256Hash;
+import com.google.bitcoin.core.StoredBlock;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionConfidence;
 import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.core.TransactionOutPoint;
 import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.core.TransactionConfidence.ConfidenceType;
 import com.google.bitcoin.core.WalletTransaction;
 
+import de.schildbach.wallet.Constants;
 
-public class RemoteMyWallet extends MyWallet {
+
+public class MyRemoteWallet extends MyWallet {
 	public static final String WebROOT = "https://blockchain.info/";
 	RemoteBitcoinJWallet _wallet;
 	String _checksum;
 	boolean _isNew = false;
+	StoredBlock _multiAddrBlock;
 
 	public static class MyTransactionInput extends TransactionInput {
 		private static final long serialVersionUID = 1L;
@@ -145,7 +150,7 @@ public class RemoteMyWallet extends MyWallet {
 		return _isNew;
 	}
 	
-	public RemoteMyWallet() throws Exception {
+	public MyRemoteWallet() throws Exception {
 		super();
 		
 		this._wallet = new RemoteBitcoinJWallet(params);
@@ -159,7 +164,7 @@ public class RemoteMyWallet extends MyWallet {
 		this._isNew = true;
 	}
 	
-	public RemoteMyWallet(String base64Payload, String password) throws Exception {
+	public MyRemoteWallet(String base64Payload, String password) throws Exception {
 		super(base64Payload, password);
 		
 		this._wallet = new RemoteBitcoinJWallet(params);
@@ -231,8 +236,27 @@ public class RemoteMyWallet extends MyWallet {
 		
 		Map<String, Object> top = (Map<String, Object>) JSONValue.parse(response);
 
+		Map<String, Object> info_obj = (Map<String, Object>) top.get("info");
+
+		Map<String, Object> block_obj = (Map<String, Object>) info_obj.get("latest_block");
+
+		if (block_obj != null) {
+			Sha256Hash hash = new Sha256Hash(Hex.decode((String)block_obj.get("hash")));
+			int blockIndex = ((Number)block_obj.get("block_index")).intValue();
+			int blockHeight = ((Number)block_obj.get("height")).intValue();
+			long time = ((Number)block_obj.get("time")).longValue();
+			
+			MyBlock block = new MyBlock(Constants.NETWORK_PARAMETERS);
+			block.hash = hash;
+			block.blockIndex = blockIndex;
+			block.time = time;
+			
+			this._multiAddrBlock = new StoredBlock(block, BigInteger.ZERO, blockHeight);
+		}
+		
 		Map<String, Object> wallet_obj = (Map<String, Object>) top.get("wallet");
 
+		
 		RemoteBitcoinJWallet _wallet = getBitcoinJWallet();
 		
 		_wallet.final_balance = BigInteger.valueOf(((Number)wallet_obj.get("final_balance")).longValue());
@@ -272,10 +296,10 @@ public class RemoteMyWallet extends MyWallet {
 		addKeysTobitoinJWallet(_wallet);
 	}
 	
-	public static RemoteMyWallet getWallet(String guid, String sharedKey, String password) throws Exception {
+	public static MyRemoteWallet getWallet(String guid, String sharedKey, String password) throws Exception {
 		String payload = fetchURL(WebROOT + "wallet/wallet.aes.json?guid="+guid+"&sharedKey="+sharedKey);
 				
-		return new RemoteMyWallet(payload, password);
+		return new MyRemoteWallet(payload, password);
 	}
 
 }

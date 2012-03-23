@@ -22,39 +22,73 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.json.simple.JSONValue;
 
 import piuk.MyTransaction.MyTransactionOutput;
-import piuk.RemoteMyWallet.MyTransactionInput;
+import piuk.MyRemoteWallet.MyTransactionInput;
 
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
+import com.google.bitcoin.core.AbstractWalletEventListener;
 import com.google.bitcoin.core.Block;
 import com.google.bitcoin.core.BlockChain;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.Peer;
+import com.google.bitcoin.core.PeerEventListener;
+import com.google.bitcoin.core.ProtocolException;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.StoredBlock;
 import com.google.bitcoin.core.TransactionInput;
 import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.core.WalletEventListener;
 import com.google.bitcoin.core.WalletTransaction;
 import com.google.bitcoin.store.BlockStoreException;
+import com.google.bitcoin.store.MemoryBlockStore;
 
 import de.roderick.weberknecht.WebSocket;
 import de.roderick.weberknecht.WebSocketConnection;
 import de.roderick.weberknecht.WebSocketEventHandler;
 import de.roderick.weberknecht.WebSocketException;
 import de.roderick.weberknecht.WebSocketMessage;
+import de.schildbach.wallet.Constants;
 
 public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	final String URL = "ws://api.blockchain.info:8335/inv";
 	int nfailures = 0;
 	WebSocket _websocket;
-	RemoteMyWallet remoteWallet;
+	MyRemoteWallet remoteWallet;
 	StoredBlock latestBlock;
+	boolean isConnected = false;
+	
+	public static class MyBlock extends Block {
+		private static final long serialVersionUID = 1L;
+		
+		long time;
+		Sha256Hash hash;
+		int blockIndex;
+		
+		public MyBlock(NetworkParameters params) throws ProtocolException {
+			super(params);
+		}
 
+		@Override
+		public long getTimeSeconds() {
+			return time;
+		}
+		
+		@Override
+		public Sha256Hash getHash() {
+			return hash;
+		}
+	}
+	
+	public Set<PeerEventListener> listeners = new ConcurrentSkipListSet<PeerEventListener>();
+	
 	@Override
 	public int getBestChainHeight() {
 		return getChainHead().getHeight();
@@ -62,21 +96,39 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 	@Override
 	public StoredBlock getChainHead() {
-		return latestBlock;
+		if (latestBlock != null) {
+			return latestBlock;
+		} else {
+			return remoteWallet._multiAddrBlock;
+		}
 	}
 
-	public MyBlockChain(NetworkParameters params, RemoteMyWallet remoteWallet) throws BlockStoreException, WebSocketException, URISyntaxException {
-		super(params, remoteWallet.getBitcoinJWallet(), null);
+	final private WalletEventListener walletEventListener = new AbstractWalletEventListener()
+	{
+		@Override
+		public void onChange(Wallet wallet)
+		{
+			if (remoteWallet._multiAddrBlock != null) {
+				if (latestBlock == null || latestBlock.getHeight() < remoteWallet._multiAddrBlock.getHeight()) {
+					latestBlock = remoteWallet._multiAddrBlock;
+
+					for (PeerEventListener listener : listeners) {
+						listener.onBlocksDownloaded(null, latestBlock.getHeader(), 0);
+					}
+				}
+			}
+		}
+	};
+	
+	
+	public MyBlockChain(NetworkParameters params, MyRemoteWallet remoteWallet) throws BlockStoreException, WebSocketException, URISyntaxException {
+		super(params, remoteWallet.getBitcoinJWallet(), new MemoryBlockStore(params));
 
 		this._websocket = new WebSocketConnection(new URI(URL));
 
 		this._websocket.setEventHandler(this);
 
 		this.remoteWallet = remoteWallet;
-	}
-
-	public synchronized void addWallet(Wallet wallet) {
-		throw new Error("Not supported");
 	}
 
 	public synchronized void subscribe() {
@@ -90,10 +142,18 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 			e.printStackTrace();
 		}
 	}
+	
+	public void addPeerEventListener(PeerEventListener listener) {
+		listeners.add(listener);
+	}
 
 	public void onClose() {
-		// TODO Auto-generated method stub
+		this.isConnected = false;
 
+		for (PeerEventListener listener : listeners) {
+			listener.onPeerConnected(null, 0);
+		}
+		
 		if (nfailures < 5) {
 			try {
 				++nfailures;
@@ -103,6 +163,30 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public boolean isConnected() {
+		return this.isConnected;
+	}
+	
+	public void stop() {
+		try {
+			_websocket.close();
+		} catch (WebSocketException e) {
+			e.printStackTrace();
+		}
+		
+		remoteWallet.getBitcoinJWallet().removeEventListener(walletEventListener);
+	}
+	
+	public void start() {
+		try {
+			_websocket.connect();
+		} catch (WebSocketException e) {
+			e.printStackTrace();
+		}
+		
+		remoteWallet.getBitcoinJWallet().addEventListener(walletEventListener);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -122,8 +206,13 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 				int blockIndex = ((Number)x.get("blockIndex")).intValue();
 				int blockHeight = ((Number)x.get("height")).intValue();
 				long time = ((Number)x.get("time")).longValue();
-
-				this.latestBlock = new StoredBlock(null, BigInteger.ZERO, blockHeight);
+				
+				MyBlock block = new MyBlock(Constants.NETWORK_PARAMETERS);
+				block.hash = hash;
+				block.blockIndex = blockIndex;
+				block.time = time;
+				
+				this.latestBlock = new StoredBlock(block, BigInteger.ZERO, blockHeight);
 
 				List<MyTransaction> transactions = remoteWallet.getMyTransactions();
 				List<Number> txIndexes = (List<Number>) x.get("txIndexes");
@@ -136,6 +225,10 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 					}
 				}
 
+				for (PeerEventListener listener : listeners) {
+					listener.onBlocksDownloaded(null, block, 0);
+				}
+				
 			} else if (op.equals("utx")) {
 				WalletTransaction tx = MyTransaction.fromJSONDict(x);
 
@@ -185,6 +278,12 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	}
 
 	public void onOpen() {
+		this.isConnected = true;
+		
+		for (PeerEventListener listener : listeners) {
+			listener.onPeerConnected(null, 1);
+		}
+		
 		nfailures = 0;
 	}
 }

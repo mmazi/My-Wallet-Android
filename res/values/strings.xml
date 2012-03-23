@@ -7,8 +7,9 @@
 	<string name="toast_wallet_download_failed">Failed to download wallet from server</string>
 	<string name="toast_wallet_decrypt_failed">Error decrypting wallet. Please check your password.</string>
 	<string name="toast_generated_new_wallet">Generated new wallet.</string>
-	<string name="toast_downloading_wallet">Dwonloading wallet.</string>
-	
+	<string name="toast_downloading_wallet">Downloading wallet.</string>
+	<string name="toast_error_downloading_transactions">Error downloading transactions.</string>
+	<string name="toast_error_syncing_wallet">Error syncing wallet.</string>
 	
 	<string name="error_pairing_wallet">Error pairing wallet.</string>
 	
