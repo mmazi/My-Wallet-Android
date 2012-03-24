@@ -4,8 +4,4 @@
 	<item
 		android:id="@+id/wallet_transactions_context_edit_address"
 		android:title="@string/wallet_transactions_context_edit_address_title"/>
-	<item
-		android:id="@+id/wallet_transactions_context_show_transaction"
-		android:title="@string/wallet_transactions_context_show_transaction_title"/>
-
 </menu>

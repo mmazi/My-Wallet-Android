@@ -42,7 +42,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.lang.ArrayUtils; 
 import org.json.simple.JSONValue; 
 
-import piuk.blockchain.Constants;
+import piuk.blockchain.android.Constants;
 
 import android.util.Base64;
 
@@ -145,6 +145,7 @@ public class MyWallet {
 		}
 
 		/** Gets the hash160 form of the public key (as seen in addresses). */
+		@Override
 		public byte[] getPubKeyHash() {
 			return toAddress(Constants.NETWORK_PARAMETERS).getHash160();
 		}
@@ -165,6 +166,13 @@ public class MyWallet {
 	public List<Map<String, Object>> getKeysMap() {
 		return (List<Map<String, Object>>) root.get("keys");
 	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<Map<String, Object>> getAddressBookMap() {
+		return (List<Map<String, Object>>) root.get("address_book");
+	}
+
 
 	public boolean isDoubleEncrypted() {
 		Object double_encryption = root.get("double_encryption");
@@ -221,11 +229,10 @@ public class MyWallet {
 		return ecKey;
 	}
 
-	@SuppressWarnings("unchecked")
 	public Map<String, String> getLabelMap() {
 		Map<String, String> _labelMap = new HashMap<String, String>();
 
-		List<Map<String, Object>> addressBook = (List<Map<String, Object>>)root.get("address_book");
+		List<Map<String, Object>> addressBook = this.getAddressBookMap();
 
 		if (addressBook != null) {
 			for (Map<String, Object> addr_book : addressBook) {
@@ -243,6 +250,64 @@ public class MyWallet {
 		}
 
 		return _labelMap;
+	}
+
+	public Map<String, Object> findAddressBookEntry(String address) {
+		List<Map<String, Object>> addressBook = this.getAddressBookMap();
+
+		if (addressBook != null) {
+			for (Map<String, Object> addr_book : addressBook) {
+				if (addr_book.get("addr").equals(address))
+					return addr_book;
+			}
+		}
+
+		return null;
+	}
+	public Map<String, Object> findKey(String address) {
+		for (Map<String, Object> key : this.getKeysMap()) {
+			String addr = (String) key.get("addr");
+
+			if (addr.equals(address))
+				return key;
+		}
+		return null;
+	}
+
+	public boolean isMine(String address) {
+		for (Map<String, Object> key : this.getKeysMap()) {
+			String addr = (String) key.get("addr");
+
+			if (addr.equals(address))
+				return true;
+		}
+
+		return false;
+	}
+
+	public void addLabel(String address, String label) {
+		if (this.isMine(address)) {
+			findKey(address).put("label", label);
+		} else {
+			Map<String, Object> entry = findAddressBookEntry(address);
+			if (entry != null) {
+				entry.put("label", label);
+			} else {
+				List<Map<String, Object>> addressBook = this.getAddressBookMap();
+
+				if (addressBook == null) {
+					addressBook = new ArrayList<Map<String, Object>>();
+					root.put("address_book", addressBook);
+				}
+
+				HashMap<String, Object> map = new HashMap<String, Object>();
+				map.put("addr", address);
+				map.put("label", label);
+
+				addressBook.add(map);
+			}
+		}
+
 	}
 
 	protected void addKeysTobitoinJWallet(Wallet wallet) throws Exception {
@@ -297,23 +362,28 @@ public class MyWallet {
 
 		getKeysMap().add(map);
 
+
 		return true;
 	}
 
-	public boolean validateSecondPassword(String secondPassword) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
+	public boolean validateSecondPassword(String secondPassword) {
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
 
-		//N Rounds of SHA256
-		byte[] data = md.digest((getSharedKey() + secondPassword).getBytes("UTF-8"));
-		for (int ii = 1; ii < PBKDF2Iterations; ++ii) {
-			data = md.digest(data);
+			//N Rounds of SHA256
+			byte[] data = md.digest((getSharedKey() + secondPassword).getBytes("UTF-8"));
+			for (int ii = 1; ii < PBKDF2Iterations; ++ii) {
+				data = md.digest(data);
+			}
+
+			String dpasswordhash  = new String(Hex.encode(data));
+			if (dpasswordhash.equals(getDPasswordHash()))
+				return true;
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
-		String dpasswordhash  = new String(Hex.encode(data));
-		if (dpasswordhash.equals(getDPasswordHash()))
-			return true;
-		else
-			return false;
+		return false;
 	}
 
 	//AES 256 PBKDF2 CBC iso10126 decryption

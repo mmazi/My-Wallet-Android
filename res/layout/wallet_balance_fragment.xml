@@ -5,7 +5,7 @@
 	android:gravity="center"
 	android:orientation="vertical" >
 
-	<de.schildbach.wallet.ui.CurrencyAmountView
+	<piuk.blockchain.android.ui.CurrencyAmountView
 		android:id="@+id/wallet_balance"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
@@ -17,7 +17,7 @@
 			android:drawablePadding="4dp"
 			android:enabled="false"
 			android:textSize="42sp" />
-	</de.schildbach.wallet.ui.CurrencyAmountView>
+	</piuk.blockchain.android.ui.CurrencyAmountView>
 
 	<TextView
 		android:id="@+id/wallet_balance_local"

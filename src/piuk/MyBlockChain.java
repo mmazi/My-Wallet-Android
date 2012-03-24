@@ -27,15 +27,13 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.json.simple.JSONValue;
 
-import piuk.MyTransaction.MyTransactionOutput;
-import piuk.blockchain.Constants;
+import piuk.blockchain.android.Constants;
 
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 import com.google.bitcoin.core.AbstractWalletEventListener;
 import com.google.bitcoin.core.Block;
 import com.google.bitcoin.core.BlockChain;
-import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.PeerEventListener;
 import com.google.bitcoin.core.ProtocolException;
@@ -49,7 +47,6 @@ import com.google.bitcoin.core.WalletTransaction;
 import com.google.bitcoin.store.BlockStoreException;
 import com.google.bitcoin.store.MemoryBlockStore;
 
-import de.roderick.weberknecht.WebSocket;
 import de.roderick.weberknecht.WebSocketConnection;
 import de.roderick.weberknecht.WebSocketEventHandler;
 import de.roderick.weberknecht.WebSocketException;
@@ -58,10 +55,11 @@ import de.roderick.weberknecht.WebSocketMessage;
 public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	final String URL = "ws://api.blockchain.info:8335/inv";
 	int nfailures = 0;
-	WebSocket _websocket;
+	WebSocketConnection _websocket;
 	MyRemoteWallet remoteWallet;
 	StoredBlock latestBlock;
 	boolean isConnected = false;
+	boolean ignoreNextClose;
 	
 	public MyRemoteWallet getRemoteWallet() {
 		return remoteWallet;
@@ -118,6 +116,10 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 						listener.onBlocksDownloaded(null, latestBlock.getHeader(), 0);
 					}
 				}
+				
+				//Disconnect and reconnect
+				//To resubscribe
+				subscribe();
 			}
 		}
 	};
@@ -135,11 +137,14 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 	public synchronized void subscribe() {
 		try {
-			_websocket.send("{\"op\":\"blocks_sub\"}");
+			String message = "{\"op\":\"blocks_sub\"}";
 
-			for (ECKey key : this.remoteWallet.getBitcoinJWallet().keychain) {
-				_websocket.send("{\"op\":\"addr_sub\", \"addr\":\""+key.toAddress(NetworkParameters.prodNet()).toString()+"\"}");
+			for (Map<String, Object> key : this.remoteWallet.getKeysMap()) {				
+				message += "{\"op\":\"addr_sub\", \"addr\":\""+key.get("addr")+"\"}";
 			}
+			
+			_websocket.send(message);
+			
 		} catch (WebSocketException e) {
 			e.printStackTrace();
 		}
@@ -152,6 +157,9 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	public void onClose() {
 		this.isConnected = false;
 
+		if (ignoreNextClose)
+			return;
+		
 		for (PeerEventListener listener : listeners) {
 			listener.onPeerConnected(null, 0);
 		}
@@ -173,6 +181,8 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	
 	public void stop() {
 		try {
+			this.ignoreNextClose = true;
+			
 			_websocket.close();
 		} catch (WebSocketException e) {
 			e.printStackTrace();
@@ -182,6 +192,8 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	}
 	
 	public void start() {
+		this.ignoreNextClose = false;
+
 		try {
 			_websocket.connect();
 		} catch (WebSocketException e) {
@@ -193,15 +205,24 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 	@SuppressWarnings("unchecked")
 	public void onMessage(WebSocketMessage wmessage) {
+		
+		
 		try {
 			String message = wmessage.getText();
 
+			System.out.println("Websocket() onMessage() " + message);
+
 			Map<String, Object> top = (Map<String, Object>) JSONValue.parse(message);
 
+			
+			if (top == null)
+				return;
+			
 			String op = (String) top.get("op");
 
 			Map<String, Object> x = (Map<String, Object>) top.get("x");
 
+					
 			if (op.equals("block")) {
 
 				Sha256Hash hash = new Sha256Hash(Hex.decode((String)x.get("hash")));
@@ -220,9 +241,12 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 				List<Number> txIndexes = (List<Number>) x.get("txIndexes");
 				for (Number txIndex : txIndexes) {
 					for (MyTransaction tx : transactions) {
-						if (tx.txIndex == txIndex.intValue() && tx.confidence.height != blockHeight) {
-							tx.confidence.height = blockHeight;
-							tx.confidence.runListeners(); 
+						
+						MyTransactionConfidence confidence = (MyTransactionConfidence) tx.getConfidence();
+						
+						if (tx.txIndex == txIndex.intValue() && confidence.height != blockHeight) {
+							confidence.height = blockHeight;
+							confidence.runListeners(); 
 						}
 					}
 				}
@@ -233,7 +257,7 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 				
 			} else if (op.equals("utx")) {
 				WalletTransaction tx = MyTransaction.fromJSONDict(x);
-
+				
 				BigInteger result = BigInteger.ZERO;
 
 				BigInteger previousBalance = remoteWallet.getBitcoinJWallet().final_balance;
@@ -268,10 +292,13 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 				remoteWallet.getBitcoinJWallet().addWalletTransaction(tx);
 
-				if (result.compareTo(BigInteger.ZERO) >= 0)
+				if (result.compareTo(BigInteger.ZERO) >= 0) {
+					System.out.println("On Received");
+					
 					remoteWallet.getBitcoinJWallet().invokeOnCoinsReceived(tx.getTransaction(), previousBalance, remoteWallet.getBitcoinJWallet().final_balance);
-				else
+				} else {
 					remoteWallet.getBitcoinJWallet().invokeOnCoinsSent(tx.getTransaction(), previousBalance, remoteWallet.getBitcoinJWallet().final_balance);
+				}
 			}
 			
 		} catch (Exception e) {
@@ -281,6 +308,8 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 	public void onOpen() {
 		this.isConnected = true;
+		
+		subscribe();
 		
 		for (PeerEventListener listener : listeners) {
 			listener.onPeerConnected(null, 1);

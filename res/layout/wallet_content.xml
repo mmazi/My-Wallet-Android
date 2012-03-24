@@ -6,7 +6,7 @@
 
 	<fragment
 		android:id="@id/action_bar_fragment"
-		android:name="de.schildbach.wallet.util.ActionBarFragment"
+		android:name="piuk.blockchain.android.util.ActionBarFragment"
 		android:layout_width="fill_parent"
 		android:layout_height="@dimen/action_bar_height" />
 
@@ -25,14 +25,14 @@
 
 			<fragment
 				android:id="@+id/wallet_address_fragment"
-				android:name="de.schildbach.wallet.ui.WalletAddressFragment"
+				android:name="piuk.blockchain.android.ui.WalletAddressFragment"
 				android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
 				android:layout_margin="16dp" />
 
 			<fragment
 				android:id="@+id/wallet_balance_fragment"
-				android:name="de.schildbach.wallet.ui.WalletBalanceFragment"
+				android:name="piuk.blockchain.android.ui.WalletBalanceFragment"
 				android:layout_width="fill_parent"
 				android:layout_height="wrap_content"
 				android:layout_gravity="center"
@@ -48,14 +48,14 @@
 
 				<fragment
 					android:id="@+id/wallet_transactions_fragment"
-					android:name="de.schildbach.wallet.ui.WalletTransactionsFragment"
+					android:name="piuk.blockchain.android.ui.WalletTransactionsFragment"
 					android:layout_width="fill_parent"
 					android:layout_height="fill_parent"
 					android:layout_gravity="bottom|center_horizontal" />
 
 				<fragment
 					android:id="@+id/exchange_rates_fragment"
-					android:name="de.schildbach.wallet.ui.ExchangeRatesFragment"
+					android:name="piuk.blockchain.android.ui.ExchangeRatesFragment"
 					android:layout_width="fill_parent"
 					android:layout_height="fill_parent" />
 			</FrameLayout>

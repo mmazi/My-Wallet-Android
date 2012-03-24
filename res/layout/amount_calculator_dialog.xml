@@ -5,7 +5,7 @@
 	android:background="#fff"
 	android:orientation="vertical" >
 
-	<de.schildbach.wallet.ui.CurrencyAmountView
+	<piuk.blockchain.android.ui.CurrencyAmountView
 		android:id="@+id/amount_calculator_row_btc"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
@@ -20,9 +20,9 @@
 			android:drawablePadding="4dp"
 			android:imeOptions="actionDone"
 			android:textSize="@dimen/font_size_xlarge" />
-	</de.schildbach.wallet.ui.CurrencyAmountView>
+	</piuk.blockchain.android.ui.CurrencyAmountView>
 
-	<de.schildbach.wallet.ui.CurrencyAmountView
+	<piuk.blockchain.android.ui.CurrencyAmountView
 		android:id="@+id/amount_calculator_row_local"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
@@ -37,6 +37,6 @@
 			android:drawablePadding="4dp"
 			android:imeOptions="actionDone"
 			android:textSize="@dimen/font_size_xlarge" />
-	</de.schildbach.wallet.ui.CurrencyAmountView>
+	</piuk.blockchain.android.ui.CurrencyAmountView>
 
 </LinearLayout>

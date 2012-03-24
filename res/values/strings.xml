@@ -14,11 +14,20 @@
 	
 	<string name="error_pairing_wallet">Error pairing wallet.</string>
 	
+	<string name="second_password_text">This action requires a second password in order to fully decrypt your bitcoin wallet. Please enter your second password below.</string>
 	<string name="new_account_password_length_error">Password must be between 10 and 255 characters</string>
 	<string name="new_account_password_mismatch_error">Passwords do not match</string>
 	<string name="new_account_kaptcha_error">Captcha code incorrect</string>
 	<string name="new_account_no_kaptcha_error">You must enter a captcha code</string>
 	<string name="new_account_success">New account successfully created</string>
+	<string name="dialog_continue">Continue</string>
+	<string name="second_password_title">Second Password</string>
+	<string name="second_password_correct">Second Password Correct</string>
+	<string name="second_password_incorrect">Second Password Incorrect</string>
+	<string name="generate_key_no_password_error">Cannot generate key without a second password</string>
+	<string name="send_no_password_error">Cannot send transaction without a second password</string>
+	
+	<string name="error_setting_label">Error setting address label</string>
 	
 	<string name="new_account_title">New account</string>
 	<string name="password">Password:</string>
@@ -154,10 +163,12 @@
 	<string name="amount_calculator_dialog_title">Currency calculator</string>
 	<string name="amount_calculator_dialog_button_use">Use</string>
 
+	
 	<string name="preferences_about_title">About</string>
 	<string name="preferences_license_title">License</string>
 	<string name="preferences_credits_bitcoinj_title">"This app is using 'bitcoinj'"</string>
 	<string name="preferences_credits_zxing_title">"This app is using 'zxing'"</string>
+	<string name="about_credits_bitcoin_wallet_android">"This app is using 'Bitcoin Wallet For android'"</string>
 	<string name="preferences_credits_icon_title">"This app is using an icon by 'bitboy'"</string>
 	<string name="preferences_author_twitter_title">Author at Twitter</string>
 	<string name="preferences_author_googleplus_title">Author at Google+</string>

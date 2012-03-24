@@ -50,7 +50,7 @@
 		android:textSize="@dimen/font_size_small"
 		android:textStyle="bold" />
 
-	<de.schildbach.wallet.ui.CurrencyAmountView
+	<piuk.blockchain.android.ui.CurrencyAmountView
 		android:id="@+id/send_coins_available"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
@@ -64,7 +64,7 @@
 			android:drawablePadding="4dp"
 			android:enabled="false"
 			android:textSize="@dimen/font_size_xlarge" />
-	</de.schildbach.wallet.ui.CurrencyAmountView>
+	</piuk.blockchain.android.ui.CurrencyAmountView>
 
 	<TextView
 		android:id="@+id/send_coins_pending"
@@ -85,7 +85,7 @@
 		android:textSize="@dimen/font_size_small"
 		android:textStyle="bold" />
 
-	<de.schildbach.wallet.ui.CurrencyAmountView
+	<piuk.blockchain.android.ui.CurrencyAmountView
 		android:id="@+id/send_coins_amount"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
@@ -98,7 +98,7 @@
 			android:background="@drawable/edit_text"
 			android:drawablePadding="4dp"
 			android:textSize="@dimen/font_size_xlarge" />
-	</de.schildbach.wallet.ui.CurrencyAmountView>
+	</piuk.blockchain.android.ui.CurrencyAmountView>
 
 	<TextView
 		android:layout_width="fill_parent"
@@ -110,7 +110,7 @@
 		android:textSize="@dimen/font_size_small"
 		android:textStyle="bold" />
 
-	<de.schildbach.wallet.ui.CurrencyAmountView
+	<piuk.blockchain.android.ui.CurrencyAmountView
 		android:id="@+id/send_coins_fee"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
@@ -123,7 +123,7 @@
 			android:background="@drawable/edit_text"
 			android:drawablePadding="4dp"
 			android:textSize="@dimen/font_size_xlarge" />
-	</de.schildbach.wallet.ui.CurrencyAmountView>
+	</piuk.blockchain.android.ui.CurrencyAmountView>
 
 	<!-- stretch dummy -->
 

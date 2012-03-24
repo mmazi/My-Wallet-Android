@@ -6,7 +6,7 @@
 
 	<fragment
 		android:id="@id/action_bar_fragment"
-		android:name="de.schildbach.wallet.util.ActionBarFragment"
+		android:name="piuk.blockchain.android.util.ActionBarFragment"
 		android:layout_width="fill_parent"
 		android:layout_height="@dimen/action_bar_height" />
 
@@ -25,7 +25,7 @@
 
 			<fragment
 				android:id="@+id/send_coins_fragment"
-				android:name="de.schildbach.wallet.ui.SendCoinsFragment"
+				android:name="piuk.blockchain.android.ui.SendCoinsFragment"
 				android:layout_width="fill_parent"
 				android:layout_height="fill_parent" />
 		</ScrollView>

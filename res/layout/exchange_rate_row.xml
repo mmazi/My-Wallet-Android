@@ -23,7 +23,7 @@
 		android:layout_height="wrap_content"
 		android:layout_weight="100" />
 
-	<de.schildbach.wallet.ui.CurrencyAmountView
+	<piuk.blockchain.android.ui.CurrencyAmountView
 		android:id="@+id/exchange_rate_value"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
@@ -36,6 +36,6 @@
 			android:layout_height="wrap_content"
 			android:enabled="false"
 			android:textSize="18sp" />
-	</de.schildbach.wallet.ui.CurrencyAmountView>
+	</piuk.blockchain.android.ui.CurrencyAmountView>
 
 </LinearLayout>

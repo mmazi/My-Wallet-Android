@@ -75,7 +75,7 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_weight="0.50"
-        android:inputType="textPassword" />
+        android:inputType="text|textPassword" />
 
     <FrameLayout
         android:id="@+id/frameLayout1"

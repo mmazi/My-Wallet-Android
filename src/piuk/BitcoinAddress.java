@@ -43,6 +43,7 @@ public class BitcoinAddress implements Serializable {
 		this.hash160  = new Hash(bytes);
 	}
 
+	@Override
 	public String toString() {
 		if (_toStringCache == null) {
 			int length = hash160.getBytes().length;

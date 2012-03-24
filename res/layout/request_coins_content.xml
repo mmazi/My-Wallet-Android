@@ -6,7 +6,7 @@
 
 	<fragment
 		android:id="@id/action_bar_fragment"
-		android:name="de.schildbach.wallet.util.ActionBarFragment"
+		android:name="piuk.blockchain.android.util.ActionBarFragment"
 		android:layout_width="fill_parent"
 		android:layout_height="@dimen/action_bar_height" />
 
@@ -18,7 +18,7 @@
 		android:foregroundGravity="top|fill_horizontal" >
 
 		<fragment
-			android:name="de.schildbach.wallet.ui.RequestCoinsFragment"
+			android:name="piuk.blockchain.android.ui.RequestCoinsFragment"
 			android:layout_width="fill_parent"
 			android:layout_height="fill_parent" />
 	</FrameLayout>

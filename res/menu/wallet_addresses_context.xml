@@ -13,8 +13,5 @@
 	<item
 		android:id="@+id/wallet_addresses_context_default"
 		android:title="@string/address_book_context_default_title"/>
-	<item
-		android:id="@+id/wallet_addresses_context_determine_creation_time"
-		android:title="@string/address_book_context_determine_creation_time_title"/>
 
 </menu>

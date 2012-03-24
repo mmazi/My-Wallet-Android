@@ -4,8 +4,8 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>de.schildbach.wallet</groupId>
-	<artifactId>wallet</artifactId>
+	<groupId>piuk.blockchain.android</groupId>
+	<artifactId>blockchain</artifactId>
 	<packaging>apk</packaging>
 	<version>2.0</version>
 	<name>Blockchain</name>

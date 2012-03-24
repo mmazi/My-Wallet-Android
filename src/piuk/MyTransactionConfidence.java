@@ -16,15 +16,18 @@ public class MyTransactionConfidence extends TransactionConfidence {
 		this.double_spend = double_spend;
 	}
 	
-    public synchronized int getAppearedAtChainHeight() {
+    @Override
+	public synchronized int getAppearedAtChainHeight() {
     	return height;
     }
 
-    public synchronized void setAppearedAtChainHeight(int appearedAtChainHeight) {
+    @Override
+	public synchronized void setAppearedAtChainHeight(int appearedAtChainHeight) {
     	this.height = appearedAtChainHeight;
     }
     
-    public synchronized ConfidenceType getConfidenceType() {
+    @Override
+	public synchronized ConfidenceType getConfidenceType() {
         if (height == 0)
         	return ConfidenceType.NOT_SEEN_IN_CHAIN;
         else if (double_spend)

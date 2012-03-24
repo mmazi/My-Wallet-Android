@@ -17,12 +17,13 @@
 
 package piuk;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import piuk.blockchain.Constants;
+import piuk.blockchain.android.Constants;
 
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
@@ -32,23 +33,25 @@ import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionConfidence;
 import com.google.bitcoin.core.TransactionOutPoint;
-import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletTransaction;
 import com.google.bitcoin.core.WalletTransaction.Pool;
 
 
-public class MyTransaction extends Transaction {
+public class MyTransaction extends Transaction implements Serializable {
 	private static final long serialVersionUID = 1L;
 	Sha256Hash hash;
 	Date time;
-	MyTransactionConfidence confidence;
+
+	int height;
+	boolean double_spend;
+	
 	int txIndex;
 	public BigInteger result;
 
     @Override
     public synchronized TransactionConfidence getConfidence() {
-    	return confidence;
+    	return new MyTransactionConfidence(this, height, double_spend);
     }
 
     @Override
@@ -75,7 +78,7 @@ public class MyTransaction extends Transaction {
 
 	@Override
     public boolean hasConfidence() {
-        return (confidence != null);
+       return true;
     }
     
 	public MyTransaction(NetworkParameters params, int version, Sha256Hash hash) {
@@ -103,20 +106,6 @@ public class MyTransaction extends Transaction {
 		return hash;
 	}
 	
-	public static class MyTransactionOutput extends TransactionOutput {
-		private static final long serialVersionUID = 1L;
-		
-		Address address;
-		
-		MyTransactionOutput(NetworkParameters params, Transaction parent, BigInteger value, Address to) {
-			super(params, parent, value, to);
-		}
-		
-		public Address getToAddress() {
-			return address;
-		}
-	}
-	
 	@SuppressWarnings("unchecked")
 	public static WalletTransaction fromJSONDict(Map<String, Object> transactionDict) throws Exception {
 		
@@ -140,7 +129,9 @@ public class MyTransaction extends Transaction {
 
 		MyTransaction tx = new MyTransaction(Constants.NETWORK_PARAMETERS, 1, hash);
 		
-		tx.confidence = new MyTransactionConfidence(tx, height, double_spend);
+		tx.height = height;
+		
+		tx.double_spend = double_spend;
 		
 		tx.txIndex = txIndex;
 		
@@ -159,18 +150,20 @@ public class MyTransaction extends Transaction {
 			BigInteger value = BigInteger.valueOf(((Number)prev_out_dict.get("value")).longValue());
 			Address addr = new Address(Constants.NETWORK_PARAMETERS, (String)prev_out_dict.get("addr"));
 			
-			int txOutputN = ((Number)prev_out_dict.get("n")).intValue();
+			int txOutputN = 0;
+			if (prev_out_dict.get("n") != null)
+				txOutputN = ((Number)prev_out_dict.get("n")).intValue();
 					
 			TransactionOutPoint outpoint = new TransactionOutPoint(Constants.NETWORK_PARAMETERS, txOutputN, (Transaction)null);
 			
 			MyTransactionInput input = new MyTransactionInput(Constants.NETWORK_PARAMETERS, null, null, outpoint);
 			
-			input.address = addr;
+			input.address = addr.toString();
 			
 			input.value = value;
 			
 			tx.addInput(input);
-		} 
+		}  
 		
 		List<Map<String, Object>> outputs = (List<Map<String, Object>>) transactionDict.get("out");
 		for (Map<String, Object> outDict : outputs) {
