@@ -132,11 +132,16 @@ public final class AmountCalculatorFragment extends DialogFragment implements Lo
 				done();
 			}
 		});
+		
 		dialog.setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener()
 		{
 			public void onClick(final DialogInterface dialog, final int whichButton)
 			{
-				dismiss();
+				try {
+					dismiss();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		});
 

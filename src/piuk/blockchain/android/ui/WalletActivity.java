@@ -70,8 +70,6 @@ public final class WalletActivity extends AbstractWalletActivity
 		public void onServiceConnected(final ComponentName name, final IBinder binder)
 		{
 			service = ((BlockchainService.LocalBinder) binder).getService();
-
-			service.cancelCoinsReceived();
 		}
 
 		public void onServiceDisconnected(final ComponentName name)

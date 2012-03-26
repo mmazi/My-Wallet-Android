@@ -1,7 +1,9 @@
-Bitcoin is a decentralization digital currency which allows you to make world-wide transactions free free. The blockchain android app allows you to access your bitcoin wallet directly from your android device. 
+The blockchain android app allows you to access your bitcoin wallet directly from your android device. 
 
 You can find more about Bitcoin at
 https://blockchain.info/wallet/
+
+Bitcoin is a decentralization digital currency which allows you to make world-wide transactions for free. 
 
 FEATURES:
 

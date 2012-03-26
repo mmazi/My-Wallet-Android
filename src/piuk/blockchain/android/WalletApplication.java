@@ -172,19 +172,67 @@ public class WalletApplication extends Application
 		new Thread(new Runnable() {
 			public void run() {
 				try {					
-					String payload = remoteWallet.sync();
-					
-					//Payload will return null when not modified
-					if (payload != null) {
-						FileOutputStream file = openFileOutput(Constants.WALLET_FILENAME, Constants.WALLET_MODE);
-						file.write(payload.getBytes("UTF-8"));
-						file.close();
 
-						//Copy our labels into the address book
-						if (remoteWallet.getLabelMap() != null) {
-							for(Entry<String, String> labelObj : remoteWallet.getLabelMap().entrySet()) {
-								AddressBookProvider.setLabel(getContentResolver(), labelObj.getKey(), labelObj.getValue());
+					//Can't sync a new wallet
+					if (remoteWallet.isNew())
+						return;
+
+					String payload = null; 
+
+					//Retry 3 times
+					for (int ii = 0; ii < 3; ++ii) {
+						try {
+							payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey(), remoteWallet.getChecksum());
+
+							break;
+
+						} catch (Exception e) {
+							e.printStackTrace();
+
+							handler.post(new Runnable() {
+								public void run() {
+									Toast.makeText(WalletApplication.this, R.string.toast_wallet_download_failed, Toast.LENGTH_SHORT).show();
+								}
+							});
+
+							try {
+								Thread.sleep(10000);
+							} catch (InterruptedException e1) {
+								e1.printStackTrace();
 							}
+						}
+					}
+
+					if (payload != null) {
+						try {
+							remoteWallet.setPayload(payload);
+						} catch (Exception e) {
+							e.printStackTrace();
+
+							handler.post(new Runnable()
+							{
+								public void run() {
+									Toast.makeText(WalletApplication.this, R.string.toast_wallet_decryption_failed, Toast.LENGTH_LONG).show();
+								}
+							});
+
+							return;
+						}
+
+						try {
+							//Payload will return null when not modified
+							FileOutputStream file = openFileOutput(Constants.WALLET_FILENAME, Constants.WALLET_MODE);
+							file.write(payload.getBytes("UTF-8"));
+							file.close();
+
+							//Copy our labels into the address book
+							if (remoteWallet.getLabelMap() != null) {
+								for(Entry<String, String> labelObj : remoteWallet.getLabelMap().entrySet()) {
+									AddressBookProvider.setLabel(getContentResolver(), labelObj.getKey(), labelObj.getValue());
+								}
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
 						}
 					}
 
@@ -205,11 +253,39 @@ public class WalletApplication extends Application
 		}).start();
 	}
 
-	public void loadRemoteWallet() {			
+
+	public synchronized void loadRemoteWallet() {			
 		new Thread(new Runnable() {
 			public void run() {
+				String payload = null; 
+
+				//Retry 3 times
+				for (int ii = 0; ii < 3; ++ii) {
+					try {
+						payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey());
+
+						break;
+					} catch (Exception e) {
+						e.printStackTrace();
+
+						handler.post(new Runnable() {
+							public void run() {
+								Toast.makeText(WalletApplication.this, R.string.toast_wallet_download_failed, Toast.LENGTH_SHORT).show();
+							}
+						});
+
+						try {
+							Thread.sleep(10000);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+
+				if (payload == null)
+					return;
+
 				try {
-					String payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey());
 
 					FileOutputStream file = openFileOutput(Constants.WALLET_FILENAME, Constants.WALLET_MODE);
 					file.write(payload.getBytes("UTF-8"));
@@ -221,17 +297,22 @@ public class WalletApplication extends Application
 
 					remoteWallet = newRemoteWallet;
 
-
-
 					//Copy the event listeners
 					if (oldRemoteWallet != null) {						
-
 						newRemoteWallet.getBitcoinJWallet().eventListeners.addAll(oldRemoteWallet.getBitcoinJWallet().eventListeners);
 
 						oldRemoteWallet.getBitcoinJWallet().invokeOnChange();
 
 						oldRemoteWallet.getBitcoinJWallet().eventListeners.clear();
 					}
+
+					handler.post(new Runnable()
+					{
+						public void run()
+						{
+							notifyWidgets();
+						}
+					});
 
 					localSaveWallet();
 
@@ -245,7 +326,23 @@ public class WalletApplication extends Application
 					new Thread(new Runnable() {
 						public void run() {
 							try {					
+								handler.post(new Runnable()
+								{
+									public void run()
+									{
+										notifyWidgets();
+									}
+								});
+
 								writeMultiAddrCache(remoteWallet.doMultiAddr());
+
+								handler.post(new Runnable()
+								{
+									public void run()
+									{
+										notifyWidgets();
+									}
+								});
 							} catch (Exception e) {
 								e.printStackTrace();
 

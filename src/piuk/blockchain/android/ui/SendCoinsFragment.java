@@ -226,6 +226,12 @@ public final class SendCoinsFragment extends Fragment
 								}
 							});
 							
+							try {
+								Thread.sleep(2000);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+							
 							application.syncWithMyWallet();
 						}
 
@@ -392,7 +398,11 @@ public final class SendCoinsFragment extends Fragment
 			final BigInteger amount = amountView.getAmount();
 			final boolean validAmount = amount != null && amount.signum() > 0;
 
-			final BigInteger fee = feeView.getAmount();
+			BigInteger fee = feeView.getAmount();
+			
+			if (fee == null)
+				 fee = BigInteger.ZERO;
+			
 			final boolean validFee = fee != null && fee.signum() >= 0;
 
 			receivingAddressView.setEnabled(state == State.INPUT);

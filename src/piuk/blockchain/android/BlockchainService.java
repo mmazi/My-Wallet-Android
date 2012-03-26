@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import piuk.MyBlockChain;
+import piuk.MyTransactionOutput;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -40,6 +41,7 @@ import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.widget.Toast;
 
 import com.google.bitcoin.core.AbstractPeerEventListener;
@@ -51,6 +53,7 @@ import com.google.bitcoin.core.PeerEventListener;
 import com.google.bitcoin.core.ScriptException;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.TransactionInput;
+import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletEventListener;
 import piuk.blockchain.R;
@@ -79,26 +82,48 @@ public class BlockchainService extends android.app.Service
 	private MyBlockChain blockChain;
 
 	private final Handler handler = new Handler();
+	private Handler websocketHandler = new Handler();
+
 	private final Handler delayHandler = new Handler();
 
 	private NotificationManager nm;
 	private static final int NOTIFICATION_ID_CONNECTED = 0;
 	private static final int NOTIFICATION_ID_COINS_RECEIVED = 1;
-
-	private int notificationCount = 0;
-	private BigInteger notificationAccumulatedAmount = BigInteger.ZERO;
-	private final List<Address> notificationAddresses = new LinkedList<Address>();
+	private static final int NOTIFICATION_ID_COINS_SENT = 3;
 
 	private final WalletEventListener walletEventListener = new AbstractWalletEventListener()
 	{
+
+		@Override
+		public void onCoinsSent(final Wallet wallet, final Transaction tx, final BigInteger prevBalance, final BigInteger newBalance)
+		{
+			System.out.println("onCoinsSent()");
+
+			handler.post(new Runnable()
+			{
+				public void run()
+				{
+					try {
+						final MyTransactionOutput output = (MyTransactionOutput) tx.getOutputs().get(0);
+						final Address to = output.getToAddress();
+						final BigInteger amount = tx.getValue(wallet);
+
+						notifyCoinsSent(to, amount);
+
+						notifyWidgets();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		}
+
 		@Override
 		public void onCoinsReceived(final Wallet wallet, final Transaction tx, final BigInteger prevBalance, final BigInteger newBalance)
 		{
-			try
-			{
-				
+			try {
 				System.out.println("onCoinsReceived()");
-				
+
 				final TransactionInput input = tx.getInputs().get(0);
 				final Address from = input.getFromAddress();
 				final BigInteger amount = tx.getValue(wallet);
@@ -110,26 +135,70 @@ public class BlockchainService extends android.app.Service
 						notifyCoinsReceived(from, amount);
 
 						notifyWidgets();
-						
+
 					}
 				});
-			}
-			catch (final ScriptException x)
-			{
-				throw new RuntimeException(x);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	};
+
+	private void notifyCoinsSent(final Address to, final BigInteger amount)
+	{
+		System.out.println("Notify ");
+
+		BigInteger notificationAccumulatedAmount = BigInteger.ZERO;
+
+		notificationAccumulatedAmount = notificationAccumulatedAmount.add(amount);
+		
+		final List<Address> notificationAddresses = new LinkedList<Address>();
+
+		if (to != null && !notificationAddresses.contains(to))
+			notificationAddresses.add(to);
+
+		final String tickerMsg = getString(R.string.notification_coins_sent_msg, WalletUtils.formatValue(amount))
+				+ (Constants.TEST ? " [testnet]" : "");
+
+		final String msg = getString(R.string.notification_coins_sent_msg, WalletUtils.formatValue(notificationAccumulatedAmount))
+				+ (Constants.TEST ? " [testnet]" : "");
+
+		final StringBuilder text = new StringBuilder();
+		for (final Address address : notificationAddresses)
+		{
+			if (text.length() > 0)
+				text.append(", ");
+			text.append(address.toString());
+		}
+
+		if (text.length() == 0)
+			text.append("unknown");
+
+		text.insert(0, "To ");
+
+		final Notification notification = new Notification(R.drawable.stat_notify_received, tickerMsg, System.currentTimeMillis());
+		notification.setLatestEventInfo(BlockchainService.this, msg, text,
+				PendingIntent.getActivity(BlockchainService.this, 0, new Intent(BlockchainService.this, WalletActivity.class), 0));
+
+		notification.number = 0;
+		notification.sound = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert);
+
+		nm.notify(NOTIFICATION_ID_COINS_SENT, notification);
+
+		Toast.makeText(application, tickerMsg, Toast.LENGTH_LONG).show();
+	}
+
 
 	private void notifyCoinsReceived(final Address from, final BigInteger amount)
 	{
 		System.out.println("Notify ");
 
-		if (notificationCount == 1)
-			nm.cancel(NOTIFICATION_ID_COINS_RECEIVED);
+		BigInteger notificationAccumulatedAmount = BigInteger.ZERO;
 
-		notificationCount++;
 		notificationAccumulatedAmount = notificationAccumulatedAmount.add(amount);
+
+		final List<Address> notificationAddresses = new LinkedList<Address>();
+
 		if (from != null && !notificationAddresses.contains(from))
 			notificationAddresses.add(from);
 
@@ -156,22 +225,12 @@ public class BlockchainService extends android.app.Service
 		notification.setLatestEventInfo(BlockchainService.this, msg, text,
 				PendingIntent.getActivity(BlockchainService.this, 0, new Intent(BlockchainService.this, WalletActivity.class), 0));
 
-		notification.number = notificationCount == 1 ? 0 : notificationCount;
+		notification.number = 0;
 		notification.sound = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert);
 
 		nm.notify(NOTIFICATION_ID_COINS_RECEIVED, notification);
 
-		
 		Toast.makeText(application, tickerMsg, Toast.LENGTH_LONG).show();
-	}
-
-	public void cancelCoinsReceived()
-	{
-		notificationCount = 0;
-		notificationAccumulatedAmount = BigInteger.ZERO;
-		notificationAddresses.clear();
-
-		nm.cancel(NOTIFICATION_ID_COINS_RECEIVED);
 	}
 
 	private final PeerEventListener peerEventListener = new AbstractPeerEventListener()
@@ -200,10 +259,9 @@ public class BlockchainService extends android.app.Service
 				final Date bestChainDate = new Date(blockChain.getChainHead().getHeader().getTimeSeconds() * 1000);
 				final int bestChainHeight = blockChain.getBestChainHeight();
 
-				sendBroadcastBlockchainState(bestChainDate, bestChainHeight, ACTION_BLOCKCHAIN_STATE_DOWNLOAD_OK);
 			}
 		};
-		
+
 		@Override
 		public void onPeerConnected(final Peer peer, final int peerCount)
 		{
@@ -239,9 +297,6 @@ public class BlockchainService extends android.app.Service
 								PendingIntent.getActivity(BlockchainService.this, 0, new Intent(BlockchainService.this, WalletActivity.class), 0));
 						nm.notify(NOTIFICATION_ID_CONNECTED, notification);
 					}
-
-					// send broadcast
-					sendBroadcastPeerState(numPeers);
 				}
 			});
 		}
@@ -258,39 +313,43 @@ public class BlockchainService extends android.app.Service
 		{
 			final String action = intent.getAction();
 
-			if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action))
-			{
-				hasConnectivity = !intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-				final String reason = intent.getStringExtra(ConnectivityManager.EXTRA_REASON);
-				// final boolean isFailover = intent.getBooleanExtra(ConnectivityManager.EXTRA_IS_FAILOVER, false);
-				System.out.println("network is " + (hasConnectivity ? "up" : "down") + (reason != null ? ": " + reason : ""));
+			handler.post(new Runnable() {
+				public void run() {
+					if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action))
+					{
+						hasConnectivity = !intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+						final String reason = intent.getStringExtra(ConnectivityManager.EXTRA_REASON);
+						// final boolean isFailover = intent.getBooleanExtra(ConnectivityManager.EXTRA_IS_FAILOVER, false);
+						System.out.println("network is " + (hasConnectivity ? "up" : "down") + (reason != null ? ": " + reason : ""));
 
-				check();
-			}
-			else if (Intent.ACTION_BATTERY_CHANGED.equals(action))
-			{
-				final int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-				final int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-				final int plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0);
-				hasPower = plugged != 0 || level > scale / 10;
-				System.out.println("battery changed: level=" + level + "/" + scale + " plugged=" + plugged);
+						check();
+					}
+					else if (Intent.ACTION_BATTERY_CHANGED.equals(action))
+					{
+						final int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+						final int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+						final int plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0);
+						hasPower = plugged != 0 || level > scale / 10;
+						System.out.println("battery changed: level=" + level + "/" + scale + " plugged=" + plugged);
 
-				check();
-			}
-			else if (Intent.ACTION_DEVICE_STORAGE_LOW.equals(action))
-			{
-				hasStorage = false;
-				System.out.println("device storage low");
+						check();
+					}
+					else if (Intent.ACTION_DEVICE_STORAGE_LOW.equals(action))
+					{
+						hasStorage = false;
+						System.out.println("device storage low");
 
-				check();
-			}
-			else if (Intent.ACTION_DEVICE_STORAGE_OK.equals(action))
-			{
-				hasStorage = true;
-				System.out.println("device storage ok");
+						check();
+					}
+					else if (Intent.ACTION_DEVICE_STORAGE_OK.equals(action))
+					{
+						hasStorage = true;
+						System.out.println("device storage ok");
 
-				check();
-			}
+						check();
+					}	
+				}
+			});
 		}
 
 		private void check()
@@ -298,32 +357,27 @@ public class BlockchainService extends android.app.Service
 			final boolean hasEverything = hasConnectivity && hasPower && hasStorage;
 
 			if (hasEverything) {
-				blockChain.addPeerEventListener(peerEventListener);
-
 				System.out.println("Connect");
-				
-				
+
+
 				if (!blockChain.getRemoteWallet().isUptoDate(Constants.MultiAddrTimeThreshold)) {
-					
+
 					System.out.println("Sync Wallet");
-					
+
 					application.syncWithMyWallet();
 				}
-			
-				if (!blockChain.isConnected())
-					blockChain.start();
+
+				if (websocketHandler != null && !blockChain.isConnected()) {
+					websocketHandler.post(new Runnable() {
+						public void run() {
+							blockChain.start();
+						}
+					});
+				}
 			}
-			
+
 			if (blockChain.getChainHead() == null)
 				return;
-
-			final Date bestChainDate = new Date(blockChain.getChainHead().getHeader().getTimeSeconds() * 1000);
-			final int bestChainHeight = blockChain.getBestChainHeight();
-			final int download = (hasConnectivity ? 0 : ACTION_BLOCKCHAIN_STATE_DOWNLOAD_NETWORK_PROBLEM)
-					| (hasPower ? 0 : ACTION_BLOCKCHAIN_STATE_DOWNLOAD_POWER_PROBLEM)
-					| (hasStorage ? 0 : ACTION_BLOCKCHAIN_STATE_DOWNLOAD_STORAGE_PROBLEM);
-
-			sendBroadcastBlockchainState(bestChainDate, bestChainHeight, download);
 		}
 	};
 
@@ -351,12 +405,10 @@ public class BlockchainService extends android.app.Service
 		super.onCreate();
 
 		nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		
-		application = (WalletApplication) getApplication();
-		
-		application.getWallet().addEventListener(walletEventListener);
 
-		sendBroadcastPeerState(0);
+		application = (WalletApplication) getApplication();
+
+		application.getWallet().addEventListener(walletEventListener);
 
 		final IntentFilter intentFilter = new IntentFilter();
 		intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -364,28 +416,48 @@ public class BlockchainService extends android.app.Service
 		intentFilter.addAction(Intent.ACTION_DEVICE_STORAGE_LOW);
 		intentFilter.addAction(Intent.ACTION_DEVICE_STORAGE_OK);
 		registerReceiver(broadcastReceiver, intentFilter);
-	
+
 		try {
 			blockChain = new MyBlockChain(Constants.NETWORK_PARAMETERS, application.getRemoteWallet());
+			
+			blockChain.addPeerEventListener(peerEventListener);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}	
+
+		new Thread() {
+			public void run() {
+
+				Looper.prepare();
+
+				websocketHandler = new Handler();
+
+				blockChain.start();
+			}
+		}.start();
 	}
-	
+
 	@Override
 	public void onDestroy()
 	{
 		System.out.println("service onDestroy()");
 
 		application.getWallet().removeEventListener(walletEventListener);
+		blockChain.removePeerEventListener(peerEventListener);
 
-		blockChain.stop();
+		if (websocketHandler != null) {
+			websocketHandler.post(new Runnable() {
+				public void run() {
+					blockChain.stop();		
+
+					websocketHandler = null;
+				}
+			});
+		}
+
 
 		unregisterReceiver(broadcastReceiver);
-
-		removeBroadcastPeerState();
-		
-		removeBroadcastBlockchainState();
 
 		delayHandler.removeCallbacksAndMessages(null);
 
@@ -397,34 +469,8 @@ public class BlockchainService extends android.app.Service
 			}
 		}, Constants.SHUTDOWN_REMOVE_NOTIFICATION_DELAY);
 
+
 		super.onDestroy();
-	}
-
-	private void sendBroadcastPeerState(final int numPeers)
-	{
-		final Intent broadcast = new Intent(ACTION_PEER_STATE);
-		broadcast.putExtra(ACTION_PEER_STATE_NUM_PEERS, numPeers);
-		sendStickyBroadcast(broadcast);
-	}
-
-	private void removeBroadcastPeerState()
-	{
-		removeStickyBroadcast(new Intent(ACTION_PEER_STATE));
-	}
-
-	private void sendBroadcastBlockchainState(final Date chainheadDate, final int chainheadHeight, final int download)
-	{
-		final Intent broadcast = new Intent(ACTION_BLOCKCHAIN_STATE);
-		broadcast.putExtra(ACTION_BLOCKCHAIN_STATE_BEST_CHAIN_DATE, chainheadDate);
-		broadcast.putExtra(ACTION_BLOCKCHAIN_STATE_BEST_CHAIN_HEIGHT, chainheadHeight);
-		broadcast.putExtra(ACTION_BLOCKCHAIN_STATE_DOWNLOAD, download);
-
-		sendStickyBroadcast(broadcast);
-	}
-
-	private void removeBroadcastBlockchainState()
-	{
-		removeStickyBroadcast(new Intent(ACTION_BLOCKCHAIN_STATE));
 	}
 
 	public void notifyWidgets()

@@ -4,26 +4,80 @@
 	android:layout_height="fill_parent"
 	android:orientation="vertical" >
 
+    <fragment
+        android:id="@id/action_bar_fragment"
+        android:name="piuk.blockchain.android.util.ActionBarFragment"
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/action_bar_height" />
+
     <LinearLayout
         android:id="@+id/linearLayout1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical" >
+        android:orientation="vertical"
+        android:padding="8dp" >
 
-        <fragment
-            android:id="@id/action_bar_fragment"
-            android:name="piuk.blockchain.android.util.ActionBarFragment"
-            android:layout_width="fill_parent"
-            android:layout_height="@dimen/action_bar_height" />
+        <TextView
+            android:id="@+id/TextView02"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_horizontal|left"
+            android:text="@string/pair_wallet_step1"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/less_significant" />
 
         <TextView
             android:id="@+id/textView1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:text="@string/should_not_be_here"
+            android:gravity="center_horizontal|left"
+            android:text="@string/pair_wallet_step1_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@color/less_significant" />
+
+        <TextView
+            android:id="@+id/TextView03"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|left"
+            android:text="@string/pair_wallet_step2"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="@color/less_significant" />
+
+        <TextView
+            android:id="@+id/TextView01"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|left"
+            android:text="@string/pair_wallet_step2_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@color/less_significant" />
+
+        <TextView
+            android:id="@+id/TextView05"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|left"
+            android:text="@string/pair_wallet_step3"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/less_significant" />
+
+        <TextView
+            android:id="@+id/TextView04"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|left"
+            android:text="@string/pair_wallet_step3_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="@color/less_significant" />
+
+        <Button
+            android:id="@+id/pair_qr_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/pair_wallet_button" />
 
     </LinearLayout>
 

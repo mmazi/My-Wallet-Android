@@ -27,6 +27,7 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -200,6 +201,8 @@ public final class NewAccountFragment extends DialogFragment
 										
 										activity.errorDialog(R.string.error_pairing_wallet, "Error saving preferences");
 									}
+									
+
 								}
 							});
 						} catch (final Exception e) {

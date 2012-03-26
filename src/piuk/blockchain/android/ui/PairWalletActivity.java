@@ -10,6 +10,10 @@ import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.TextView;
 
 public class PairWalletActivity extends AbstractWalletActivity {
 	private static final int REQUEST_CODE_SCAN = 0;
@@ -25,8 +29,26 @@ public class PairWalletActivity extends AbstractWalletActivity {
 
 		actionBar.setPrimaryTitle(R.string.pair_wallet_title);
 		
-		showQRReader();	
+		//showQRReader();	
+		
+		actionBar.setBack(new OnClickListener()
+		{
+			public void onClick(final View v)
+			{
+				finish();
+			}
+		});
+
+		final Button pairDeviceButton = (Button) getWindow().findViewById(R.id.pair_qr_button);
+
+		pairDeviceButton.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {	
+				showQRReader();
+			}
+		});
 	}
+	
+	
 	
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, final Intent intent)
@@ -82,7 +104,7 @@ public class PairWalletActivity extends AbstractWalletActivity {
 							e.printStackTrace();
 						}
 					}
-				}.start();
+				}.start(); 
 			} else {
 				errorDialog(R.string.error_pairing_wallet, "Error saving preferences");
 			}

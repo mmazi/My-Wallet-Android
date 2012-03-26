@@ -25,7 +25,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -358,6 +357,12 @@ public class MyRemoteWallet extends MyWallet {
 				
 		if (unspent == null || unspent.size() == 0)
 			throw new Exception("No free outputs to spend");
+		
+		if (fee == null)
+			fee = BigInteger.ZERO;
+		
+		if (amount == null || amount.compareTo(BigInteger.ZERO) <= 0)
+			throw new Exception("You must provide an amount");
 
 		//Construct a new transaction
 		Transaction tx = new Transaction(params);
@@ -387,9 +392,6 @@ public class MyRemoteWallet extends MyWallet {
 			if (firstOutPoint == null) 
 				firstOutPoint = outPoint;
 			
-			
-			System.out.println("Select " + outPoint.value);
-			
 			if (valueSelected.compareTo(valueNeeded) >= 0)
 				break;
 		}
@@ -399,10 +401,10 @@ public class MyRemoteWallet extends MyWallet {
 			throw new Exception("Insufficient Funds");
 		}
 		
+		BigInteger change = valueSelected.subtract(amount);
+		
 		//Now add the change if there is any
-		if (valueSelected.compareTo(valueNeeded) > 0) {
-			BigInteger change = valueSelected.subtract(valueNeeded);
-						
+		if (change.compareTo(BigInteger.ZERO) > 0) {						
 			BitcoinScript inputScript = new BitcoinScript(firstOutPoint.getConnectedPubKeyScript());
 			
 			//Return change to the first address
@@ -423,6 +425,10 @@ public class MyRemoteWallet extends MyWallet {
 		for (Map<String, Object> map : this.getKeysMap()) {
 			String addr = (String) map.get("addr");
 
+			//Don't include watch only addresses
+			if (map.get("priv") == null)
+				continue;
+			
 			buffer.append("&addr[]="+addr);
 		}
 		
@@ -490,35 +496,47 @@ public class MyRemoteWallet extends MyWallet {
 		return true;
 	}
 
-	public synchronized String sync() throws Exception {
+	public String getChecksum() {
+		return _checksum;
+	}
 
-		String checkSumString = "";
-
-		if (_checksum != null) 
-			checkSumString = _checksum;
-
-		String payload = fetchURL(WebROOT + "wallet/wallet.aes.json?guid="+getGUID()+"&sharedKey="+getSharedKey()+"&checksum="+checkSumString);
-
-		if (payload.equals("Not modified")) {
-			System.out.println("Not modified " + checkSumString);
-			return null;
-		} else {
-			System.out.println("Modified " + checkSumString + " " + payload.length());
-		}
-
-		MyWallet tempWallet = new MyWallet(payload, temporyPassword);
+	public synchronized String setPayload(String payload) throws Exception {
+		
+		MyRemoteWallet tempWallet = new MyRemoteWallet(payload, temporyPassword);
 
 		this.root = tempWallet.root;
 
 		this.temporySecondPassword = null;
-
+		
+		this._checksum = tempWallet._checksum;
+		
 		addKeysTobitoinJWallet(_wallet);
 		
 		return payload;
 	}
 
+	public static String getWalletPayload(String guid, String sharedKey, String checkSumString) throws Exception {
+		String payload = fetchURL(WebROOT + "wallet/wallet.aes.json?guid="+guid+"&sharedKey="+sharedKey+"&checksum="+checkSumString);
+	
+		if (payload == null) {
+			throw new Exception("Error downloading wallet");
+		}
+		
+		if (payload.equals("Not modified")) {
+			return null;
+		}
+		
+		return payload;
+	}
+	
 	public static String getWalletPayload(String guid, String sharedKey) throws Exception {
-		return fetchURL(WebROOT + "wallet/wallet.aes.json?guid="+guid+"&sharedKey="+sharedKey);
+		String payload = fetchURL(WebROOT + "wallet/wallet.aes.json?guid="+guid+"&sharedKey="+sharedKey);
+
+		if (payload == null) {
+			throw new Exception("Error downloading wallet");
+		}
+		
+		return payload;
 	}
 
 }

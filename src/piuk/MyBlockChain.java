@@ -150,11 +150,18 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 		}
 	}
 	
+
+	public void removePeerEventListener(PeerEventListener listener) {
+		listeners.remove(listener);
+	}
+
 	public void addPeerEventListener(PeerEventListener listener) {
 		listeners.add(listener);
 	}
 
 	public void onClose() {
+		System.out.println("onClose()");
+
 		this.isConnected = false;
 
 		if (ignoreNextClose)
@@ -206,6 +213,7 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	@SuppressWarnings("unchecked")
 	public void onMessage(WebSocketMessage wmessage) {
 		
+		System.out.println("OnMessage()");
 		
 		try {
 			String message = wmessage.getText();
@@ -224,7 +232,6 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 					
 			if (op.equals("block")) {
-
 				Sha256Hash hash = new Sha256Hash(Hex.decode((String)x.get("hash")));
 				int blockIndex = ((Number)x.get("blockIndex")).intValue();
 				int blockHeight = ((Number)x.get("height")).intValue();
@@ -307,6 +314,8 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	}
 
 	public void onOpen() {
+		System.out.println("onOpen()");
+
 		this.isConnected = true;
 		
 		subscribe();
