@@ -31,7 +31,7 @@
 			android:title="@string/preferences_credits_zxing_title" />
 		<Preference
 			android:key="about_credits_bitcoin_wallet_android"
-			android:title="@string/preferences_credits_zxing_title" />
+			android:title="@string/about_credits_bitcoin_wallet_android" />
 		<Preference
 			android:key="about_credits_icon"
 			android:title="@string/preferences_credits_icon_title" />

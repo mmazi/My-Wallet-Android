@@ -10,10 +10,6 @@
 		android:icon="@drawable/ic_action_info"
 		android:title="@string/wallet_options_about"/>
 	<item
-		android:id="@+id/wallet_options_safety"
-		android:icon="@drawable/ic_action_warning"
-		android:title="@string/wallet_options_safety"/>
-	<item
 		android:id="@+id/wallet_options_donate"
 		android:icon="@drawable/ic_action_donate"
 		android:title="@string/wallet_options_donate"/>

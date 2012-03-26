@@ -60,7 +60,6 @@ import piuk.blockchain.android.util.ErrorReporter;
 public final class WalletActivity extends AbstractWalletActivity
 {
 	private static final int REQUEST_CODE_SCAN = 0;
-	public static final int DIALOG_SAFETY = 1;
 	private static final int DIALOG_HELP = 0;
 
 	private BlockchainService service;
@@ -273,10 +272,6 @@ public final class WalletActivity extends AbstractWalletActivity
 				startActivity(new Intent(this, PreferencesActivity.class));
 				return true;
 
-			case R.id.wallet_options_safety:
-				showDialog(DIALOG_SAFETY);
-				return true;
-
 			case R.id.wallet_options_donate:
 				final Intent intent = new Intent(this, SendCoinsActivity.class);
 				intent.putExtra(SendCoinsActivity.INTENT_EXTRA_ADDRESS, Constants.DONATION_ADDRESS);
@@ -297,8 +292,6 @@ public final class WalletActivity extends AbstractWalletActivity
 		final WebView webView = new WebView(this);
 		if (id == DIALOG_HELP)
 			webView.loadUrl("file:///android_asset/help" + languagePrefix() + ".html");
-		else
-			webView.loadUrl("file:///android_asset/safety" + languagePrefix() + ".html");
 
 		final Dialog dialog = new Dialog(WalletActivity.this);
 		dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
