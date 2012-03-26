@@ -151,7 +151,7 @@ public class BlockchainService extends android.app.Service
 		BigInteger notificationAccumulatedAmount = BigInteger.ZERO;
 
 		notificationAccumulatedAmount = notificationAccumulatedAmount.add(amount);
-		
+
 		final List<Address> notificationAddresses = new LinkedList<Address>();
 
 		if (to != null && !notificationAddresses.contains(to))
@@ -419,7 +419,7 @@ public class BlockchainService extends android.app.Service
 
 		try {
 			blockChain = new MyBlockChain(Constants.NETWORK_PARAMETERS, application.getRemoteWallet());
-			
+
 			blockChain.addPeerEventListener(peerEventListener);
 
 		} catch (Exception e) {
@@ -446,17 +446,17 @@ public class BlockchainService extends android.app.Service
 		application.getWallet().removeEventListener(walletEventListener);
 		blockChain.removePeerEventListener(peerEventListener);
 
-		if (websocketHandler != null) {
-			websocketHandler.post(new Runnable() {
-				public void run() {
-					blockChain.stop();		
+		try {
+			System.out.println("Stop");
 
-					websocketHandler = null;
-				}
-			});
+			blockChain.stop();		
+
+			websocketHandler = null;
+
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-
-
+		
 		unregisterReceiver(broadcastReceiver);
 
 		delayHandler.removeCallbacksAndMessages(null);

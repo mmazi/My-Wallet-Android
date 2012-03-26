@@ -59,7 +59,7 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	MyRemoteWallet remoteWallet;
 	StoredBlock latestBlock;
 	boolean isConnected = false;
-	boolean ignoreNextClose;
+	boolean isRunning = true;
 	
 	public MyRemoteWallet getRemoteWallet() {
 		return remoteWallet;
@@ -109,6 +109,7 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 		public void onChange(Wallet wallet)
 		{
 			if (remoteWallet._multiAddrBlock != null) {
+				
 				if (latestBlock == null || latestBlock.getHeight() < remoteWallet._multiAddrBlock.getHeight()) {
 					latestBlock = remoteWallet._multiAddrBlock;
 
@@ -116,7 +117,11 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 						listener.onBlocksDownloaded(null, latestBlock.getHeader(), 0);
 					}
 				}
-				
+			}
+			
+			if (!isConnected() && isRunning) {
+				start();
+			} else {
 				//Disconnect and reconnect
 				//To resubscribe
 				subscribe();
@@ -164,7 +169,7 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 		this.isConnected = false;
 
-		if (ignoreNextClose)
+		if (!isRunning)
 			return;
 		
 		for (PeerEventListener listener : listeners) {
@@ -187,8 +192,10 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	}
 	
 	public void stop() {
+		System.out.println("start()");
+
 		try {
-			this.ignoreNextClose = true;
+			this.isRunning = false;
 			
 			_websocket.close();
 		} catch (WebSocketException e) {
@@ -199,8 +206,10 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	}
 	
 	public void start() {
-		this.ignoreNextClose = false;
+		this.isRunning = true;
 
+		System.out.println("start()");
+		
 		try {
 			_websocket.connect();
 		} catch (WebSocketException e) {

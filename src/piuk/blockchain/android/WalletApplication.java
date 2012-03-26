@@ -382,10 +382,25 @@ public class WalletApplication extends Application
 				public void run() {
 					try {
 						remoteWallet.remoteSave();
+						
+						handler.post(new Runnable()
+						{
+							public void run()
+							{
+								notifyWidgets();
+							}
+						});
+						
 					} catch (Exception e) {
 						e.printStackTrace();
 
-						Toast.makeText(WalletApplication.this, R.string.toast_error_syncing_wallet, Toast.LENGTH_LONG).show();
+						handler.post(new Runnable()
+						{
+							public void run()
+							{
+								Toast.makeText(WalletApplication.this, R.string.toast_error_syncing_wallet, Toast.LENGTH_LONG).show();
+							}
+						});
 					}
 				}
 			}.start();
@@ -409,7 +424,13 @@ public class WalletApplication extends Application
 					} catch (Exception e) {
 						e.printStackTrace();
 
-						Toast.makeText(WalletApplication.this, R.string.toast_error_syncing_wallet, Toast.LENGTH_LONG).show();
+						handler.post(new Runnable()
+						{
+							public void run()
+							{
+								Toast.makeText(WalletApplication.this, R.string.toast_error_syncing_wallet, Toast.LENGTH_LONG).show();
+							}
+						});
 					}
 				}
 			}.start();

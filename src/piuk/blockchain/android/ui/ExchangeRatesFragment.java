@@ -59,13 +59,22 @@ public final class ExchangeRatesFragment extends ListFragment implements LoaderM
 		@Override
 		public void onChange(Wallet wallet)
 		{
-			getActivity().runOnUiThread(new Runnable()
-			{
-				public void run()
-				{
-					updateView();
+
+			try {
+				if (getActivity() == null) {
+					return;
 				}
-			});
+
+				getActivity().runOnUiThread(new Runnable()
+				{
+					public void run()
+					{
+						updateView();
+					}
+				});
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	};
 
@@ -90,7 +99,7 @@ public final class ExchangeRatesFragment extends ListFragment implements LoaderM
 		setEmptyText(getString(R.string.exchange_rates_fragment_empty_text));
 
 		adapter = new SimpleCursorAdapter(getActivity(), R.layout.exchange_rate_row, null, new String[] { ExchangeRatesProvider.KEY_CURRENCY_CODE,
-				ExchangeRatesProvider.KEY_EXCHANGE_RATE }, new int[] { R.id.exchange_rate_currency_code, R.id.exchange_rate_value }, 0);
+			ExchangeRatesProvider.KEY_EXCHANGE_RATE }, new int[] { R.id.exchange_rate_currency_code, R.id.exchange_rate_value }, 0);
 		adapter.setViewBinder(new ViewBinder()
 		{
 			public boolean setViewValue(final View view, final Cursor cursor, final int columnIndex)
