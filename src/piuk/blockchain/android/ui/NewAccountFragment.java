@@ -174,9 +174,6 @@ public final class NewAccountFragment extends DialogFragment
 						try {
 							application.getRemoteWallet().setTemporyPassword(password.getText().toString());
 							
-							
-							System.out.println(captcha.getText().toString());
-							
 							application.getRemoteWallet().remoteSave(captcha.getText().toString());
 
 							handler.post(new Runnable() {

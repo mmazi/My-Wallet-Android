@@ -158,15 +158,19 @@ public class WalletApplication extends Application
 		if (getGUID() != null) {
 
 			//Try and read the wallet from the local cache
-			if (!readLocalWallet()) {
+			if (readLocalWallet()) {
+				System.out.println("Read local");
+
+				if(!readLocalMultiAddr())
+					doMultiAddr();
+			
+			} else {
 				System.out.println("Loading remote");
 
 				Toast.makeText(WalletApplication.this, R.string.toast_downloading_wallet, Toast.LENGTH_LONG).show();
 
 				loadRemoteWallet();
-			} else { 
-				System.out.println("Read local");
-			}
+			} 
 		}
 
 		//Otherwise wither first load or an error
@@ -244,6 +248,30 @@ public class WalletApplication extends Application
 
 		loadRemoteWallet();
 	}
+	
+	public void doMultiAddr() {
+		new Thread(new Runnable() {
+			public void run() {
+				try {				
+					writeMultiAddrCache(remoteWallet.doMultiAddr());
+
+					handler.post(new Runnable() 	{
+						public void run() {
+							notifyWidgets();
+						}
+					});
+				} catch (Exception e) {
+					e.printStackTrace();
+
+					handler.post(new Runnable() {
+						public void run() {
+							Toast.makeText(WalletApplication.this, R.string.toast_error_downloading_transactions, Toast.LENGTH_LONG).show();
+						}
+					});
+				}
+			}
+		}).start();
+	}
 
 	public synchronized void loadRemoteWallet() {			
 		new Thread(new Runnable() {
@@ -277,8 +305,10 @@ public class WalletApplication extends Application
 				}
 
 				//Payload will return null when not modified
-				if (payload == null)
+				if (payload == null) {
+					System.out.println("Payload " + payload);
 					return;
+				}
 
 				try {
 
@@ -286,6 +316,8 @@ public class WalletApplication extends Application
 					file.write(payload.getBytes("UTF-8"));
 					file.close();
 
+					remoteWallet.setTemporyPassword(getPassword());
+					
 					try {
 						if (remoteWallet == null) {
 							remoteWallet = new MyRemoteWallet(payload, getPassword());
@@ -312,39 +344,7 @@ public class WalletApplication extends Application
 						}
 					}
 
-					new Thread(new Runnable() {
-						public void run() {
-							try {					
-								handler.post(new Runnable()
-								{
-									public void run()
-									{
-										notifyWidgets();
-									}
-								});
-
-								writeMultiAddrCache(remoteWallet.doMultiAddr());
-
-								handler.post(new Runnable()
-								{
-									public void run()
-									{
-										notifyWidgets();
-									}
-								});
-							} catch (Exception e) {
-								e.printStackTrace();
-
-								handler.post(new Runnable()
-								{
-									public void run()
-									{
-										Toast.makeText(WalletApplication.this, R.string.toast_error_downloading_transactions, Toast.LENGTH_LONG).show();
-									}
-								});
-							}
-						}
-					}).start();
+					doMultiAddr();
 
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -429,9 +429,29 @@ public class WalletApplication extends Application
 			Toast.makeText(WalletApplication.this, R.string.error_setting_label, Toast.LENGTH_LONG).show();
 		}
 	}
+	
+	public boolean readLocalMultiAddr() {
+		try {
+			//Restore the multi address cache
+			FileInputStream multiaddrCacheFile = openFileInput(remoteWallet.getGUID() +  Constants.MULTIADDR_FILENAME);
 
+			String multiAddr =  IOUtils.toString(multiaddrCacheFile);
+
+			remoteWallet.parseMultiAddr(multiAddr);
+
+			return true;
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			
+			return false;
+		}
+	}
+	
 	public boolean readLocalWallet() {
 		try {
+
+			System.out.println("Password " + getPassword());
 
 			//Read the wallet from local file
 			FileInputStream file = openFileInput(Constants.WALLET_FILENAME);
@@ -441,18 +461,6 @@ public class WalletApplication extends Application
 			payload = IOUtils.toString(file, "UTF-8");
 
 			this.remoteWallet = new MyRemoteWallet(payload, getPassword());
-
-			try {
-				//Restore the multi address cache
-				FileInputStream multiaddrCacheFile = openFileInput(remoteWallet.getGUID() +  Constants.MULTIADDR_FILENAME);
-
-				String multiAddr =  IOUtils.toString(multiaddrCacheFile);
-
-				remoteWallet.parseMultiAddr(multiAddr);
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 
 			return true;
 		} catch (Exception e) {

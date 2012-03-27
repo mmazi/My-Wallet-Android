@@ -91,7 +91,7 @@ public class PairWalletActivity extends AbstractWalletActivity {
 			edit.putString("guid", guid);
 			edit.putString("sharedKey", sharedKey);
 			edit.putString("password", password);
-
+			
 			if (edit.commit()) {
 				final WalletApplication application = (WalletApplication) getApplication();
 
