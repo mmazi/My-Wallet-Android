@@ -497,6 +497,8 @@ public class MyRemoteWallet extends MyWallet {
 
 		postURL(WebROOT + "wallet", "guid="+URLEncoder.encode(this.getGUID(), "utf-8")+"&sharedKey="+URLEncoder.encode(this.getSharedKey(), "utf-8")+"&payload="+urlEncodedPayload+"&method="+method+"&length="+(payload.length())+"&checksum="+URLEncoder.encode(_checksum, "utf-8")+"&kaptcha="+kaptcha);
 		
+		_isNew = false;
+		
 		return true;
 	}
 	
@@ -520,6 +522,8 @@ public class MyRemoteWallet extends MyWallet {
 
 		addKeysTobitoinJWallet(_wallet);
 
+		_isNew = false;
+		
 		return payload;
 	}
 

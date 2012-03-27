@@ -310,6 +310,8 @@ public class WalletApplication extends Application
 					return;
 				}
 
+				
+				
 				try {
 
 					FileOutputStream file = openFileOutput(Constants.WALLET_FILENAME, Constants.WALLET_MODE);
