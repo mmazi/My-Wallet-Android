@@ -235,33 +235,6 @@ public class BlockchainService extends android.app.Service
 
 	private final PeerEventListener peerEventListener = new AbstractPeerEventListener()
 	{
-		private final AtomicLong lastMessageTime = new AtomicLong(0);
-
-		@Override
-		public void onBlocksDownloaded(final Peer peer, final Block block, final int blocksLeft)
-		{
-			delayHandler.removeCallbacksAndMessages(null);
-
-			final long now = System.currentTimeMillis();
-
-			if (now - lastMessageTime.get() > Constants.BLOCKCHAIN_STATE_BROADCAST_THROTTLE_MS)
-				delayHandler.post(runnable);
-			else
-				delayHandler.postDelayed(runnable, Constants.BLOCKCHAIN_STATE_BROADCAST_THROTTLE_MS);
-		}
-
-		private final Runnable runnable = new Runnable()
-		{
-			public void run()
-			{
-				lastMessageTime.set(System.currentTimeMillis());
-
-				final Date bestChainDate = new Date(blockChain.getChainHead().getHeader().getTimeSeconds() * 1000);
-				final int bestChainHeight = blockChain.getBestChainHeight();
-
-			}
-		};
-
 		@Override
 		public void onPeerConnected(final Peer peer, final int peerCount)
 		{
@@ -305,8 +278,6 @@ public class BlockchainService extends android.app.Service
 	private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver()
 	{
 		private boolean hasConnectivity;
-		private boolean hasPower;
-		private boolean hasStorage = true;
 
 		@Override
 		public void onReceive(final Context context, final Intent intent)
@@ -322,62 +293,12 @@ public class BlockchainService extends android.app.Service
 						// final boolean isFailover = intent.getBooleanExtra(ConnectivityManager.EXTRA_IS_FAILOVER, false);
 						System.out.println("network is " + (hasConnectivity ? "up" : "down") + (reason != null ? ": " + reason : ""));
 
-						check();
-					}
-					else if (Intent.ACTION_BATTERY_CHANGED.equals(action))
-					{
-						final int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-						final int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-						final int plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0);
-						hasPower = plugged != 0 || level > scale / 10;
-						System.out.println("battery changed: level=" + level + "/" + scale + " plugged=" + plugged);
-
-						check();
-					}
-					else if (Intent.ACTION_DEVICE_STORAGE_LOW.equals(action))
-					{
-						hasStorage = false;
-						System.out.println("device storage low");
-
-						check();
-					}
-					else if (Intent.ACTION_DEVICE_STORAGE_OK.equals(action))
-					{
-						hasStorage = true;
-						System.out.println("device storage ok");
-
-						check();
+						if (hasConnectivity) {
+							start();
+						}
 					}	
 				}
 			});
-		}
-
-		private void check()
-		{
-			final boolean hasEverything = hasConnectivity && hasPower && hasStorage;
-
-			if (hasEverything) {
-				System.out.println("Connect");
-
-
-				if (!blockChain.getRemoteWallet().isUptoDate(Constants.MultiAddrTimeThreshold)) {
-
-					System.out.println("Sync Wallet");
-
-					application.syncWithMyWallet();
-				}
-
-				if (websocketHandler != null && !blockChain.isConnected()) {
-					websocketHandler.post(new Runnable() {
-						public void run() {
-							blockChain.start();
-						}
-					});
-				}
-			}
-
-			if (blockChain.getChainHead() == null)
-				return;
 		}
 	};
 
@@ -438,14 +359,22 @@ public class BlockchainService extends android.app.Service
 		}.start();
 	}
 
-	@Override
-	public void onDestroy()
+	public void start()
 	{
-		System.out.println("service onDestroy()");
+		if (!blockChain.getRemoteWallet().isUptoDate(Constants.MultiAddrTimeThreshold)) {
+			application.syncWithMyWallet();
+		}
 
-		application.getWallet().removeEventListener(walletEventListener);
-		blockChain.removePeerEventListener(peerEventListener);
+		if (websocketHandler != null && !blockChain.isConnected()) {
+			websocketHandler.post(new Runnable() {
+				public void run() {
+					blockChain.start();
+				}
+			});
+		}
+	}
 
+	public void stop() {
 		try {
 			System.out.println("Stop");
 
@@ -456,6 +385,17 @@ public class BlockchainService extends android.app.Service
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void onDestroy()
+	{
+		System.out.println("service onDestroy()");
+
+		application.getWallet().removeEventListener(walletEventListener);
+		blockChain.removePeerEventListener(peerEventListener);
+
+		stop();
 		
 		unregisterReceiver(broadcastReceiver);
 
@@ -468,7 +408,6 @@ public class BlockchainService extends android.app.Service
 				nm.cancel(NOTIFICATION_ID_CONNECTED);
 			}
 		}, Constants.SHUTDOWN_REMOVE_NOTIFICATION_DELAY);
-
 
 		super.onDestroy();
 	}

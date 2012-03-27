@@ -62,19 +62,6 @@ public final class WalletActivity extends AbstractWalletActivity
 	private static final int REQUEST_CODE_SCAN = 0;
 	private static final int DIALOG_HELP = 0;
 
-	private BlockchainService service;
-
-	private final ServiceConnection serviceConnection = new ServiceConnection()
-	{
-		public void onServiceConnected(final ComponentName name, final IBinder binder)
-		{
-			service = ((BlockchainService.LocalBinder) binder).getService();
-		}
-
-		public void onServiceDisconnected(final ComponentName name)
-		{
-		}
-	};
 	
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, final Intent intent)
@@ -228,16 +215,14 @@ public final class WalletActivity extends AbstractWalletActivity
 				
 		if (application.isNewWallet())
 			WelcomeFragment.show(getSupportFragmentManager());
-		
-		
 	}
 
 	@Override
 	protected void onResume()
 	{
-		super.onResume();
+		getWalletApplication().connect();
 
-		bindService(new Intent(this, BlockchainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+		super.onResume();
 
 		checkLowStorageAlert();
 	}
@@ -245,7 +230,7 @@ public final class WalletActivity extends AbstractWalletActivity
 	@Override
 	protected void onPause()
 	{
-		unbindService(serviceConnection);
+		getWalletApplication().diconnectSoon();
 
 		super.onPause();
 	}

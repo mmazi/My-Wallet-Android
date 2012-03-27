@@ -24,6 +24,8 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.util.ArrayList;
 import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.commons.io.IOUtils;
 
@@ -34,11 +36,14 @@ import piuk.blockchain.android.util.ErrorReporter;
 import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Handler;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 
@@ -56,6 +61,17 @@ public class WalletApplication extends Application
 	private MyRemoteWallet remoteWallet;
 
 	private final Handler handler = new Handler();
+	private BlockchainService service;
+	private Timer timer ;
+
+	private final ServiceConnection serviceConnection = new ServiceConnection()
+	{
+		public void onServiceConnected(final ComponentName name, final IBinder binder) {
+			service = ((BlockchainService.LocalBinder) binder).getService();
+		}
+
+		public void onServiceDisconnected(final ComponentName name) { }
+	};
 
 	final private WalletEventListener walletEventListener = new AbstractWalletEventListener()
 	{
@@ -66,7 +82,11 @@ public class WalletApplication extends Application
 			{
 				public void run()
 				{
-					localSaveWallet();
+					try {
+						localSaveWallet();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			});
 		}
@@ -76,6 +96,48 @@ public class WalletApplication extends Application
 		return remoteWallet.isNew();
 	}
 
+	public void connect() {
+		if (timer != null) {
+			try {
+				timer.cancel();
+
+				timer.purge();
+
+				timer = null;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	
+		bindService(new Intent(this, BlockchainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+	}
+
+	public void diconnectSoon() {
+		try {
+			if (timer == null) {
+				timer = new Timer();
+
+				timer.schedule(new TimerTask() {
+
+					@Override
+					public void run() {
+						handler.post(new Runnable() {
+							public void run() {
+								try {
+									unbindService(serviceConnection);
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						});
+					}
+				}, 10000);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	@Override
 	public void onCreate()
 	{
@@ -83,10 +145,14 @@ public class WalletApplication extends Application
 
 		ErrorReporter.getInstance().init(this);
 
-		//Need to save session cookie for kaptcha
-		CookieManager cookieManager = new CookieManager();
+		try {
+			//Need to save session cookie for kaptcha
+			CookieManager cookieManager = new CookieManager();
 
-		CookieHandler.setDefault(cookieManager);
+			CookieHandler.setDefault(cookieManager);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		//If the User has a saved GUID then we can restore the wallet
 		if (getGUID() != null) {
@@ -115,6 +181,8 @@ public class WalletApplication extends Application
 		}
 
 		getWallet().addEventListener(walletEventListener);
+		
+		connect();
 	}
 
 	public Wallet getWallet() {
@@ -168,91 +236,14 @@ public class WalletApplication extends Application
 		}
 	}
 
-	public synchronized void syncWithMyWallet() {			
-		new Thread(new Runnable() {
-			public void run() {
-				try {					
+	public synchronized void syncWithMyWallet() {	
 
-					//Can't sync a new wallet
-					if (remoteWallet.isNew())
-						return;
+		//Can't sync a new wallet
+		if (remoteWallet.isNew())
+			return;
 
-					String payload = null; 
-
-					//Retry 3 times
-					for (int ii = 0; ii < 3; ++ii) {
-						try {
-							payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey(), remoteWallet.getChecksum());
-
-							break;
-
-						} catch (Exception e) {
-							e.printStackTrace();
-
-							handler.post(new Runnable() {
-								public void run() {
-									Toast.makeText(WalletApplication.this, R.string.toast_wallet_download_failed, Toast.LENGTH_SHORT).show();
-								}
-							});
-
-							try {
-								Thread.sleep(10000);
-							} catch (InterruptedException e1) {
-								e1.printStackTrace();
-							}
-						}
-					}
-
-					if (payload != null) {
-						try {
-							remoteWallet.setPayload(payload);
-						} catch (Exception e) {
-							e.printStackTrace();
-
-							handler.post(new Runnable()
-							{
-								public void run() {
-									Toast.makeText(WalletApplication.this, R.string.toast_wallet_decryption_failed, Toast.LENGTH_LONG).show();
-								}
-							});
-
-							return;
-						}
-
-						try {
-							//Payload will return null when not modified
-							FileOutputStream file = openFileOutput(Constants.WALLET_FILENAME, Constants.WALLET_MODE);
-							file.write(payload.getBytes("UTF-8"));
-							file.close();
-
-							//Copy our labels into the address book
-							if (remoteWallet.getLabelMap() != null) {
-								for(Entry<String, String> labelObj : remoteWallet.getLabelMap().entrySet()) {
-									AddressBookProvider.setLabel(getContentResolver(), labelObj.getKey(), labelObj.getValue());
-								}
-							}
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-
-					writeMultiAddrCache(remoteWallet.doMultiAddr());
-
-				} catch (Exception e) {
-					e.printStackTrace();
-
-					handler.post(new Runnable()
-					{
-						public void run()
-						{
-							Toast.makeText(WalletApplication.this, R.string.toast_error_syncing_wallet, Toast.LENGTH_LONG).show();
-						}
-					});
-				} 
-			}
-		}).start();
+		loadRemoteWallet();
 	}
-
 
 	public synchronized void loadRemoteWallet() {			
 		new Thread(new Runnable() {
@@ -262,7 +253,10 @@ public class WalletApplication extends Application
 				//Retry 3 times
 				for (int ii = 0; ii < 3; ++ii) {
 					try {
-						payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey());
+						if (remoteWallet == null)
+							payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey());
+						else
+							payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey(), remoteWallet.getChecksum());
 
 						break;
 					} catch (Exception e) {
@@ -282,6 +276,7 @@ public class WalletApplication extends Application
 					}
 				}
 
+				//Payload will return null when not modified
 				if (payload == null)
 					return;
 
@@ -291,30 +286,24 @@ public class WalletApplication extends Application
 					file.write(payload.getBytes("UTF-8"));
 					file.close();
 
-					MyRemoteWallet newRemoteWallet = new MyRemoteWallet(payload, getPassword());
-
-					MyRemoteWallet oldRemoteWallet = remoteWallet;
-
-					remoteWallet = newRemoteWallet;
-
-					//Copy the event listeners
-					if (oldRemoteWallet != null) {						
-						newRemoteWallet.getBitcoinJWallet().eventListeners.addAll(oldRemoteWallet.getBitcoinJWallet().eventListeners);
-
-						oldRemoteWallet.getBitcoinJWallet().invokeOnChange();
-
-						oldRemoteWallet.getBitcoinJWallet().eventListeners.clear();
-					}
-
-					handler.post(new Runnable()
-					{
-						public void run()
-						{
-							notifyWidgets();
+					try {
+						if (remoteWallet == null) {
+							remoteWallet = new MyRemoteWallet(payload, getPassword());
+						} else {
+							remoteWallet.setPayload(payload);
 						}
-					});
+					} catch (Exception e) {
+						e.printStackTrace();
 
-					localSaveWallet();
+						handler.post(new Runnable()
+						{
+							public void run() {
+								Toast.makeText(WalletApplication.this, R.string.toast_wallet_decryption_failed, Toast.LENGTH_LONG).show();
+							}
+						});
+
+						return;
+					}
 
 					//Copy our labels into the address book
 					if (remoteWallet.getLabelMap() != null) {
@@ -364,7 +353,7 @@ public class WalletApplication extends Application
 					{
 						public void run()
 						{
-							Toast.makeText(WalletApplication.this, R.string.toast_wallet_download_failed, Toast.LENGTH_LONG).show();
+							Toast.makeText(WalletApplication.this, R.string.toast_error_syncing_wallet, Toast.LENGTH_LONG).show();
 						}
 					});
 				}
@@ -382,7 +371,7 @@ public class WalletApplication extends Application
 				public void run() {
 					try {
 						remoteWallet.remoteSave();
-						
+
 						handler.post(new Runnable()
 						{
 							public void run()
@@ -390,7 +379,7 @@ public class WalletApplication extends Application
 								notifyWidgets();
 							}
 						});
-						
+
 					} catch (Exception e) {
 						e.printStackTrace();
 

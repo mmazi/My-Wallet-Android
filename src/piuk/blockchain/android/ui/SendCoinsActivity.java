@@ -50,6 +50,20 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 	private static final int REQUEST_CODE_SCAN = 0;
 
 	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		getWalletApplication().connect();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+		getWalletApplication().diconnectSoon();
+	}
+
+	@Override
 	protected void onCreate(final Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);

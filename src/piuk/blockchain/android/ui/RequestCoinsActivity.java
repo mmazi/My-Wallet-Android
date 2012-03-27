@@ -60,6 +60,22 @@ public final class RequestCoinsActivity extends AbstractWalletActivity
 			}
 		});
 	}
+	
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+		
+		getWalletApplication().connect();
+	}
+
+	@Override
+	protected void onPause()
+	{
+		super.onPause();
+		
+		getWalletApplication().diconnectSoon();
+	}
 
 	@Override
 	protected Dialog onCreateDialog(final int id)

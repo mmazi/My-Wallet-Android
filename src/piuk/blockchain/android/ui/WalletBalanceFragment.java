@@ -73,7 +73,11 @@ public final class WalletBalanceFragment extends Fragment implements LoaderManag
 			{
 				public void run()
 				{
-					updateView();
+					try {
+						updateView();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			});
 		}

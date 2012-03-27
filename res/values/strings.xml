@@ -137,7 +137,8 @@
 	<string name="request_coins_share_dialog_title">Share request for Bitcoins…</string>
 
 	<string name="address_book_activity_title">Address Book</string>
-	<string name="address_book_list_receiving_title">Your addresses</string>
+	<string name="address_book_list_receiving_title">Active addresses</string>
+	<string name="address_book_list_archived_title">Archived addresses</string>
 	<string name="address_book_list_sending_title">Sending addresses</string>
 	<string name="address_book_empty_text">No entries in address book</string>
 	<string name="address_book_context_send_title">Send Bitcoins to address</string>
@@ -163,7 +164,7 @@
 	<string name="pair_wallet_button">Scan QR Code.</string>
 	
 	<string name="pair_wallet_step1">Step 1.</string>
-	<string name="pair_wallet_step1_content">Login to you My Wallet account on your PC or Mac.
+	<string name="pair_wallet_step1_content">Login to your My Wallet account on your PC or Mac.
 	</string>
 
 	<string name="pair_wallet_step2">Step 2.</string>

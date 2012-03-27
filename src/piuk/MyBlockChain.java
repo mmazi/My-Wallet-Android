@@ -60,18 +60,18 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 	StoredBlock latestBlock;
 	boolean isConnected = false;
 	boolean isRunning = true;
-	
+
 	public MyRemoteWallet getRemoteWallet() {
 		return remoteWallet;
 	}
 
 	public static class MyBlock extends Block {
 		private static final long serialVersionUID = 1L;
-		
+
 		long time;
 		Sha256Hash hash;
 		int blockIndex;
-		
+
 		public MyBlock(NetworkParameters params) throws ProtocolException {
 			super(params);
 		}
@@ -80,15 +80,15 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 		public long getTimeSeconds() {
 			return time;
 		}
-		
+
 		@Override
 		public Sha256Hash getHash() {
 			return hash;
 		}
 	}
-	
+
 	public Set<PeerEventListener> listeners = new ConcurrentSkipListSet<PeerEventListener>();
-	
+
 	@Override
 	public int getBestChainHeight() {
 		return getChainHead().getHeight();
@@ -108,28 +108,32 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 		@Override
 		public void onChange(Wallet wallet)
 		{
-			if (remoteWallet._multiAddrBlock != null) {
-				
-				if (latestBlock == null || latestBlock.getHeight() < remoteWallet._multiAddrBlock.getHeight()) {
-					latestBlock = remoteWallet._multiAddrBlock;
+			try {
+				if (remoteWallet._multiAddrBlock != null) {
 
-					for (PeerEventListener listener : listeners) {
-						listener.onBlocksDownloaded(null, latestBlock.getHeader(), 0);
+					if (latestBlock == null || latestBlock.getHeight() < remoteWallet._multiAddrBlock.getHeight()) {
+						latestBlock = remoteWallet._multiAddrBlock;
+
+						for (PeerEventListener listener : listeners) {
+							listener.onBlocksDownloaded(null, latestBlock.getHeader(), 0);
+						}
 					}
 				}
-			}
-			
-			if (!isConnected() && isRunning) {
-				start();
-			} else {
-				//Disconnect and reconnect
-				//To resubscribe
-				subscribe();
+
+				if (isRunning) {
+					start();
+				} else if (isConnected()){
+					//Disconnect and reconnect
+					//To resubscribe
+					subscribe();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	};
-	
-	
+
+
 	public MyBlockChain(NetworkParameters params, MyRemoteWallet remoteWallet) throws BlockStoreException, WebSocketException, URISyntaxException {
 		super(params, remoteWallet.getBitcoinJWallet(), new MemoryBlockStore(params));
 
@@ -142,19 +146,19 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 	public synchronized void subscribe() {
 		try {
-			String message = "{\"op\":\"blocks_sub\"}";
+			String message = "{\"op\":\"blocks_sub\"}{\"op\":\"wallet_sub\",\"guid\":\""+remoteWallet.getGUID()+"\"}";
 
 			for (Map<String, Object> key : this.remoteWallet.getKeysMap()) {				
 				message += "{\"op\":\"addr_sub\", \"addr\":\""+key.get("addr")+"\"}";
 			}
-			
+
 			_websocket.send(message);
-			
+
 		} catch (WebSocketException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 
 	public void removePeerEventListener(PeerEventListener listener) {
 		listeners.remove(listener);
@@ -171,11 +175,11 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 		if (!isRunning)
 			return;
-		
+
 		for (PeerEventListener listener : listeners) {
 			listener.onPeerConnected(null, 0);
 		}
-		
+
 		if (nfailures < 5) {
 			try {
 				++nfailures;
@@ -186,44 +190,44 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 			}
 		}
 	}
-	
+
 	public boolean isConnected() {
 		return this.isConnected;
 	}
-	
+
 	public void stop() {
 		System.out.println("start()");
 
 		try {
 			this.isRunning = false;
-			
+
 			_websocket.close();
 		} catch (WebSocketException e) {
 			e.printStackTrace();
 		}
-		
+
 		remoteWallet.getBitcoinJWallet().removeEventListener(walletEventListener);
 	}
-	
+
 	public void start() {
 		this.isRunning = true;
 
 		System.out.println("start()");
-		
+
 		try {
 			_websocket.connect();
 		} catch (WebSocketException e) {
 			e.printStackTrace();
 		}
-		
+
 		remoteWallet.getBitcoinJWallet().addEventListener(walletEventListener);
 	}
 
 	@SuppressWarnings("unchecked")
 	public void onMessage(WebSocketMessage wmessage) {
-		
+
 		System.out.println("OnMessage()");
-		
+
 		try {
 			String message = wmessage.getText();
 
@@ -231,35 +235,35 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 			Map<String, Object> top = (Map<String, Object>) JSONValue.parse(message);
 
-			
+
 			if (top == null)
 				return;
-			
+
 			String op = (String) top.get("op");
 
-			Map<String, Object> x = (Map<String, Object>) top.get("x");
 
-					
 			if (op.equals("block")) {
+				Map<String, Object> x = (Map<String, Object>) top.get("x");
+
 				Sha256Hash hash = new Sha256Hash(Hex.decode((String)x.get("hash")));
 				int blockIndex = ((Number)x.get("blockIndex")).intValue();
 				int blockHeight = ((Number)x.get("height")).intValue();
 				long time = ((Number)x.get("time")).longValue();
-				
+
 				MyBlock block = new MyBlock(Constants.NETWORK_PARAMETERS);
 				block.hash = hash;
 				block.blockIndex = blockIndex;
 				block.time = time;
-				
+
 				this.latestBlock = new StoredBlock(block, BigInteger.ZERO, blockHeight);
 
 				List<MyTransaction> transactions = remoteWallet.getMyTransactions();
 				List<Number> txIndexes = (List<Number>) x.get("txIndexes");
 				for (Number txIndex : txIndexes) {
 					for (MyTransaction tx : transactions) {
-						
+
 						MyTransactionConfidence confidence = (MyTransactionConfidence) tx.getConfidence();
-						
+
 						if (tx.txIndex == txIndex.intValue() && confidence.height != blockHeight) {
 							confidence.height = blockHeight;
 							confidence.runListeners(); 
@@ -270,10 +274,12 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 				for (PeerEventListener listener : listeners) {
 					listener.onBlocksDownloaded(null, block, 0);
 				}
-				
+
 			} else if (op.equals("utx")) {
+				Map<String, Object> x = (Map<String, Object>) top.get("x");
+
 				WalletTransaction tx = MyTransaction.fromJSONDict(x);
-				
+
 				BigInteger result = BigInteger.ZERO;
 
 				BigInteger previousBalance = remoteWallet.getBitcoinJWallet().final_balance;
@@ -310,13 +316,36 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 
 				if (result.compareTo(BigInteger.ZERO) >= 0) {
 					System.out.println("On Received");
-					
+
 					remoteWallet.getBitcoinJWallet().invokeOnCoinsReceived(tx.getTransaction(), previousBalance, remoteWallet.getBitcoinJWallet().final_balance);
 				} else {
 					remoteWallet.getBitcoinJWallet().invokeOnCoinsSent(tx.getTransaction(), previousBalance, remoteWallet.getBitcoinJWallet().final_balance);
 				}
+			} else if (op.equals("on_change")) {
+				String newChecksum = (String) top.get("checksum");
+				String oldChecksum = remoteWallet.getChecksum();
+
+				System.out.println("On change " + newChecksum + " " + oldChecksum);
+				
+				if (!newChecksum.equals(oldChecksum)) {
+					try {
+						String newPayload = MyRemoteWallet.getWalletPayload(remoteWallet.getGUID(), remoteWallet.getSharedKey(), oldChecksum);
+
+						if (newPayload == null) 
+							return;
+						
+						remoteWallet.setPayload(newPayload);
+						
+						remoteWallet.getBitcoinJWallet().invokeOnChange();
+						
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+
+				}
+
 			}
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -326,13 +355,13 @@ public class MyBlockChain extends BlockChain implements WebSocketEventHandler {
 		System.out.println("onOpen()");
 
 		this.isConnected = true;
-		
+
 		subscribe();
-		
+
 		for (PeerEventListener listener : listeners) {
 			listener.onPeerConnected(null, 1);
 		}
-		
+
 		nfailures = 0;
 	}
 }

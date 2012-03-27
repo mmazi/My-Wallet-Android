@@ -45,7 +45,6 @@ public final class PreferencesActivity extends PreferenceActivity
 	private static final String KEY_ABOUT_AUTHOR_GOOGLEPLUS = "about_author_googleplus";
 	private static final String KEY_ABOUT_BITCOIN_WALLET_FOR_ANDROID = "about_credits_bitcoin_wallet_android";
 
-	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{

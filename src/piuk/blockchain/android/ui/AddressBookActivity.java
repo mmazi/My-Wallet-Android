@@ -74,6 +74,21 @@ public final class AddressBookActivity extends AbstractWalletActivity
 	private final Handler handler = new Handler();
 
 	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		getWalletApplication().connect();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+		getWalletApplication().diconnectSoon();
+	}
+
+	
+	@Override
 	protected void onCreate(final Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);

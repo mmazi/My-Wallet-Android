@@ -162,12 +162,16 @@ public final class WalletTransactionsFragment extends Fragment
 			@Override
 			public void onChange(Wallet wallet)
 			{
-				forceLoad();
+				try {
+					forceLoad();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		};
 
 		private static final Comparator<Transaction> TRANSACTION_COMPARATOR = new Comparator<Transaction>()
-		{
+				{
 			public int compare(final Transaction tx1, final Transaction tx2)
 			{
 				final boolean pending1 = tx1.getConfidence().getConfidenceType() == ConfidenceType.NOT_SEEN_IN_CHAIN;
@@ -182,9 +186,9 @@ public final class WalletTransactionsFragment extends Fragment
 				if (time1 != time2)
 					return time1 > time2 ? -1 : 1;
 
-				return 0;
+					return 0;
 			}
-		};
+				};
 	}
 
 	public static class ListFragment extends android.support.v4.app.ListFragment implements LoaderCallbacks<List<Transaction>>
@@ -217,7 +221,11 @@ public final class WalletTransactionsFragment extends Fragment
 			@Override
 			public void onChange(final boolean selfChange)
 			{
-				adapter.notifyDataSetChanged();
+				try {
+					adapter.notifyDataSetChanged();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		};
 
@@ -249,14 +257,14 @@ public final class WalletTransactionsFragment extends Fragment
 			this.mode = getArguments().getInt(KEY_MODE);
 
 			adapter = new ArrayAdapter<Transaction>(activity, 0)
-			{
+					{
 				final DateFormat dateFormat = android.text.format.DateFormat.getDateFormat(activity);
 				final DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(activity);
 				final int colorSignificant = getResources().getColor(R.color.significant);
 				final int colorInsignificant = getResources().getColor(R.color.insignificant);
 				final int colorSent = getResources().getColor(R.color.color_sent);
 				final int colorReceived = getResources().getColor(R.color.color_received);
-				
+
 				@Override
 				public View getView(final int position, View row, final ViewGroup parent)
 				{
@@ -367,7 +375,7 @@ public final class WalletTransactionsFragment extends Fragment
 						} else {
 							rowValue.setTextColor(colorReceived);
 						}
-					
+
 						return row;
 					}
 					catch (final ScriptException x)
@@ -375,10 +383,10 @@ public final class WalletTransactionsFragment extends Fragment
 						throw new RuntimeException(x);
 					}
 				}
-			};
-			setListAdapter(adapter);
+					};
+					setListAdapter(adapter);
 
-			activity.getContentResolver().registerContentObserver(AddressBookProvider.CONTENT_URI, true, contentObserver);
+					activity.getContentResolver().registerContentObserver(AddressBookProvider.CONTENT_URI, true, contentObserver);
 		}
 
 		@Override
@@ -453,16 +461,16 @@ public final class WalletTransactionsFragment extends Fragment
 
 			switch (item.getItemId())
 			{
-				case R.id.wallet_transactions_context_edit_address:
-					editAddress(tx);
-					return true;
+			case R.id.wallet_transactions_context_edit_address:
+				editAddress(tx);
+				return true;
 
 				/*case R.id.wallet_transactions_context_show_transaction:
 					TransactionActivity.show(activity, tx);
 					return true;
 				 */
-				default:
-					return false;
+			default:
+				return false;
 			}
 		}
 

@@ -68,8 +68,6 @@ import piuk.blockchain.android.util.WalletUtils;
 public final class SendCoinsFragment extends Fragment
 {
 	private WalletApplication application;
-
-	private BlockchainService service;
 	private final Handler handler = new Handler();
 	private Runnable sentRunnable;
 
@@ -86,21 +84,6 @@ public final class SendCoinsFragment extends Fragment
 	{
 		INPUT, SENDING, SENT
 	}
-
-	private final ServiceConnection serviceConnection = new ServiceConnection()
-	{
-		public void onServiceConnected(final ComponentName name, final IBinder binder)
-		{
-			service = ((BlockchainService.LocalBinder) binder).getService();
-			onServiceBound();
-		}
-
-		public void onServiceDisconnected(final ComponentName name)
-		{
-			service = null;
-			onServiceUnbound();
-		}
-	};
 
 	private final TextWatcher textWatcher = new TextWatcher()
 	{
@@ -140,7 +123,6 @@ public final class SendCoinsFragment extends Fragment
 
 		application = (WalletApplication) activity.getApplication();
 
-		activity.bindService(new Intent(activity, BlockchainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
 	}
 
 	@Override
@@ -332,8 +314,6 @@ public final class SendCoinsFragment extends Fragment
 		public void onDestroy()
 		{
 			final Activity activity = getActivity();
-
-			activity.unbindService(serviceConnection);
 
 			super.onDestroy();
 		}

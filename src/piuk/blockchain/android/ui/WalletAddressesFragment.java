@@ -251,7 +251,11 @@ public final class WalletAddressesFragment extends ListFragment
 		@Override
 		public void onChange(final boolean selfChange)
 		{
-			updateView();
+			try {
+				updateView();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	};
 }
