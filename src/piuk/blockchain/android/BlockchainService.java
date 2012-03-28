@@ -37,6 +37,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Handler;
@@ -82,7 +83,6 @@ public class BlockchainService extends android.app.Service
 	private MyBlockChain blockChain;
 
 	private final Handler handler = new Handler();
-	private Handler websocketHandler = new Handler();
 
 	private final Handler delayHandler = new Handler();
 
@@ -318,9 +318,38 @@ public class BlockchainService extends android.app.Service
 		return mBinder;
 	}
 
+	private class BlockchainStartTask extends AsyncTask<Object, Object, Object> {
+
+		@Override
+		protected Object doInBackground(Object... arg0) {
+			try {
+				blockChain.start();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return arg0;
+		}
+	 }
+	
+	private class BlockchainStopTask extends AsyncTask<Object, Object, Object> {
+
+		@Override
+		protected Object doInBackground(Object... arg0) {
+			try {
+				blockChain.stop();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			return arg0;
+		}
+	 }
+	
+	
 	@Override
 	public void onCreate()
 	{
+		
 		System.out.println("service onCreate()");
 
 		super.onCreate();
@@ -347,16 +376,7 @@ public class BlockchainService extends android.app.Service
 			e.printStackTrace();
 		}	
 
-		new Thread() {
-			public void run() {
-
-				Looper.prepare();
-
-				websocketHandler = new Handler();
-
-				blockChain.start();
-			}
-		}.start();
+		new BlockchainStartTask().execute();
 	}
 
 	public void start()
@@ -368,12 +388,8 @@ public class BlockchainService extends android.app.Service
 			application.syncWithMyWallet();
 		}
 
-		if (websocketHandler != null && !blockChain.isConnected()) {
-			websocketHandler.post(new Runnable() {
-				public void run() {
-					blockChain.start();
-				}
-			});
+		if (!blockChain.isConnected()) {
+			new BlockchainStartTask().execute();
 		}
 	}
 
@@ -381,9 +397,7 @@ public class BlockchainService extends android.app.Service
 		try {
 			System.out.println("Stop");
 
-			blockChain.stop();		
-
-			websocketHandler = null;
+			new BlockchainStopTask().execute();
 
 		} catch (Exception e) {
 			e.printStackTrace();

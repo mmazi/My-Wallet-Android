@@ -147,6 +147,9 @@ public final class SendCoinsFragment extends Fragment
 			public void onClick(final View v) {
 				WalletApplication application = (WalletApplication) activity.getApplication();
 				
+				//Don't allow deposits into new wallets
+				if (application.getRemoteWallet().isNew())
+					return;
 				
 				ECKey key = application.getWallet().keychain.get(0);
 				
