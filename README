@@ -1,44 +1,30 @@
-KNOWN ISSUES
 
-When run for the first time, the block chain needs to be downloaded. For testnet, this currently
-takes around 5-10 minutes on a WLAN. When the sync icon in the status disappears, the download is
-finished and the wallet is on the top of the block chain.
+API Calls used
 
-Sometimes you will get system notifications about the same incoming Bitcoins multiple times. You
-still get the coins only once. 
+** Download a list of transactions for a wallet **
 
+https://blockchain.info/api
+
+/multiaddr
+
+** Websocket API **
+https://blockchain.info/api_websocket
+
+Used for live confirmations of transactions and wallet update notifications
+
+** download Wallet **
+/wallet/wallet.aes.json?guid=$guid&sharedKey=$sharedKey
 
 FILES
 
-/data/data/piuk.blockchain.android/files/wallet (MODE_PRIVATE)
-	Wallet for prodnet
+//Backup wallet file (one version behind the latest on the server)
+wallet.backup.aes.json
 
-/data/data/piuk.blockchain.android/files/wallet-testnet (MODE_WORLD_READABLE | MODE_WORLD_WRITEABLE)
-	Wallet for testnet
+//Latest wallet file
+wallet.aes.json
 
-The wallet file format is not compatible to wallet.dat (Satoshi client).
-
-/data/data/piuk.blockchain.android/files/key-backup-base58 (MODE_PRIVATE)
-	Backups of private keys for prodnet
-
-/data/data/piuk.blockchain.android/files/key-backup-base58-testnet (MODE_WORLD_READABLE | MODE_WORLD_WRITEABLE)
-	Backups of private keys for testnet
-
-
-DEBUGGING
-
-Wallet file for testnet can be pulled from (even unrooted) device using
-
-	adb pull /data/data/piuk.blockchain.android/files/wallet-testnet
-
-Backups of key for testnet can be pulled from device using
-
-	adb pull /data/data/piuk.blockchain.android/files/key-backup-asn1-testnet
-	adb pull /data/data/piuk.blockchain.android/files/key-backup-base58-testnet
-
-Log messages can be viewed by
-
-	adb logcat
+//Cache of your transactions
+multiaddr.cache.json
 
 
 SETTING UP FOR DEVELOPMENT
@@ -50,7 +36,7 @@ your local Maven repository.
 
 Use Git to check out the project to your workspace:
 
-  git clone https://code.google.com/p/bitcoin-wallet/ bitcoin-wallet
+  git clone https://github.com/zootreeves/My-Wallet-Android
 
 Change to that directory.
 
