@@ -246,7 +246,7 @@ public final class SendCoinsFragment extends Fragment
 
 				public boolean onReady(Transaction tx, BigInteger fee, long priority) {			
 										
-					if ((priority < 576000000L || tx.bitcoinSerialize().length > 1024) && fee.compareTo(BigInteger.ZERO) == 0) {		
+					if ((priority < 57600000L || tx.bitcoinSerialize().length > 1024) && fee.compareTo(BigInteger.ZERO) == 0) {		
 
 						handler.post(new Runnable() {
 							public void run() {
