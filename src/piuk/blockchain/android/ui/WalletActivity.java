@@ -196,7 +196,7 @@ public final class WalletActivity extends AbstractWalletActivity
 			{
 				public void onClick(final View v)
 				{
-					AddressBookActivity.start(WalletActivity.this, true);
+					WalletAddressesActivity.start(WalletActivity.this, true);
 				}
 			});
 		}
@@ -250,7 +250,7 @@ public final class WalletActivity extends AbstractWalletActivity
 		switch (item.getItemId())
 		{
 			case R.id.wallet_options_address_book:
-				AddressBookActivity.start(WalletActivity.this, true);
+				WalletAddressesActivity.start(WalletActivity.this, true);
 				return true;
 
 			case R.id.wallet_options_preferences:

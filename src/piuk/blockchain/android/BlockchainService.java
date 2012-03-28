@@ -361,6 +361,9 @@ public class BlockchainService extends android.app.Service
 
 	public void start()
 	{
+		
+		System.out.println("start() blockchain");
+		
 		if (!blockChain.getRemoteWallet().isUptoDate(Constants.MultiAddrTimeThreshold)) {
 			application.syncWithMyWallet();
 		}

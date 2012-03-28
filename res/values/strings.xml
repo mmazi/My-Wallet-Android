@@ -38,6 +38,7 @@
 	<string name="send_no_password_error">Cannot send transaction without a second password
 	</string>
 
+	<string name="ask_for_fee">This transaction is low priority it is recommended you include a 0.005 BTC miners fee. Would you like to add this fee now?</string>
 	<string name="error_setting_label">Error setting address label</string>
 
 	<string name="new_account_title">New account</string>
@@ -121,6 +122,9 @@
 	<string name="send_coins_fragment_fee_label">Fee (optional)</string>
 	<string name="send_coins_fragment_button_send">Send</string>
 	<string name="send_coins_fragment_button_back">Back</string>
+	<string name="send_coins_fragment_need_btc">Need Bitcoins?</string>
+	<string name="send_coins_fragment_instant_deposit">Instant Deposit</string>
+	
 	<string name="send_coins_sending_msg">Sending…</string>
 	<string name="send_coins_sent_msg">Sent!</string>
 	<string name="send_coins_add_address_dialog_title">The recipient is not yet contained in your address

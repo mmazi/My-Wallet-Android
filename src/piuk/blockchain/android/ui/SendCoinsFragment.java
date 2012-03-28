@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -48,6 +49,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.AddressFormatException;
+import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Wallet.BalanceType;
 
@@ -74,7 +77,6 @@ public final class SendCoinsFragment extends Fragment
 	private AutoCompleteTextView receivingAddressView;
 	private View receivingAddressErrorView;
 	private CurrencyAmountView amountView;
-	private CurrencyAmountView feeView;
 	private Button viewGo;
 	private Button viewCancel;
 
@@ -125,6 +127,8 @@ public final class SendCoinsFragment extends Fragment
 
 	}
 
+
+
 	@Override
 	public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState)
 	{
@@ -135,6 +139,23 @@ public final class SendCoinsFragment extends Fragment
 		final BigInteger estimated = application.getWallet().getBalance(BalanceType.ESTIMATED);
 		final BigInteger available = application.getWallet().getBalance(BalanceType.AVAILABLE);
 		final BigInteger pending = estimated.subtract(available);
+	
+		
+		Button instantDepositButton = (Button) view.findViewById(R.id.instant_deposit);
+		
+		instantDepositButton.setOnClickListener(new OnClickListener() {
+			public void onClick(final View v) {
+				WalletApplication application = (WalletApplication) activity.getApplication();
+				
+				
+				ECKey key = application.getWallet().keychain.get(0);
+				
+				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://blockchain.info/deposit?address="+key.toAddress(Constants.NETWORK_PARAMETERS)));
+				
+				startActivity(browserIntent);
+			}
+		});
+		
 		// TODO subscribe to wallet changes
 
 		receivingAddressView = (AutoCompleteTextView) view.findViewById(R.id.send_coins_receiving_address);
@@ -172,79 +193,119 @@ public final class SendCoinsFragment extends Fragment
 			}
 		});
 
-		feeView = (CurrencyAmountView) view.findViewById(R.id.send_coins_fee);
-		feeView.setAmount(Constants.DEFAULT_TX_FEE);
-		feeView.setListener(listener);
-
 		viewGo = (Button) view.findViewById(R.id.send_coins_go);
 		viewGo.setOnClickListener(new OnClickListener()
-		{
-			public void makeTransaction() {
-				try {
-					final Address receivingAddress = new Address(Constants.NETWORK_PARAMETERS, receivingAddressView.getText().toString().trim());
-					final BigInteger amount = amountView.getAmount();
-					final BigInteger fee = feeView.getAmount();
-					final WalletApplication application = (WalletApplication) getActivity().getApplication();
+		{			
+			final SendProgress progress = new SendProgress() {
+				public void onSend(Transaction tx, final String message) {						
+					handler.post(new Runnable() {
+						public void run() {
+							state = State.SENT;
 
+							activity.longToast(message);
 
-					final ProgressDialog progressDialog = ProgressDialog.show(getActivity(), "", getString(R.string.send_coins_sending_msg), true);
-					 
-					progressDialog.show();
-					
-					application.getRemoteWallet().sendCoinsAsync(receivingAddress.toString(), amount, fee, new SendProgress() {
-						
-						public void onSend(Transaction tx, final String message) {						
-							handler.post(new Runnable() {
-								public void run() {
-									state = State.SENT;
-									
-									activity.longToast(message);
+							activity.setResult(Activity.RESULT_OK);
 
-									activity.setResult(Activity.RESULT_OK);
-
-									updateView();
-									
-									progressDialog.dismiss();
-								}
-							});
-							
-							try {
-								Thread.sleep(2000);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-							
-							application.syncWithMyWallet();
-						}
-
-						public void onError(String message) {
-							handler.post(new Runnable() {
-								public void run() {
-									state = State.INPUT;
-									
-									activity.longToast(R.string.send_coins_error_msg);
-
-									updateView();
-									
-									progressDialog.dismiss();
-								}
-							});							
-						}
-
-						public void onProgress(final String message) {
-							handler.post(new Runnable() {
-								public void run() {
-									state = State.SENDING;
-
-									activity.toast(message);
-
-									updateView();
-									
-									progressDialog.dismiss();
-								}
-							});
+							updateView();
 						}
 					});
+
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+
+					application.syncWithMyWallet();
+				}
+
+				public void onError(final String message) {
+					handler.post(new Runnable() {
+						public void run() {
+
+							System.out.println("On Error");
+							
+							state = State.INPUT;
+
+							activity.longToast(message);
+
+							updateView();
+						}
+					});							
+				}
+
+				public void onProgress(final String message) {
+					handler.post(new Runnable() {
+						public void run() {
+							state = State.SENDING;
+							
+							updateView();
+						}
+					});
+				}
+
+				public boolean onReady(Transaction tx, BigInteger fee, long priority) {			
+										
+					if ((priority < 576000000L || tx.bitcoinSerialize().length > 1024) && fee.compareTo(BigInteger.ZERO) == 0) {		
+
+						handler.post(new Runnable() {
+							public void run() {
+								AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+								builder.setMessage(R.string.ask_for_fee)
+								.setCancelable(false)
+								.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int id) {												
+										send(BigInteger.valueOf(500000)); //0.005 BTC fee
+									}
+								})
+								.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int id) {
+										dialog.cancel();
+									}
+								});
+								
+								AlertDialog alert = builder.create();
+								
+								alert.show();
+							}
+						});
+						
+						handler.post(new Runnable() {
+							public void run() {
+								state = State.INPUT;
+								updateView();
+							}
+						});
+						
+						return false;
+					}
+
+					return true;
+				}
+			};
+
+			public void send(BigInteger fee) {
+				Address receivingAddress;
+				
+				try {
+					receivingAddress = new Address(Constants.NETWORK_PARAMETERS, receivingAddressView.getText().toString().trim());
+				} catch (AddressFormatException e) {
+					e.printStackTrace();
+					
+					return;
+				}
+				
+				final BigInteger amount = amountView.getAmount();
+				final WalletApplication application = (WalletApplication) getActivity().getApplication();
+				
+				application.getRemoteWallet().sendCoinsAsync(receivingAddress.toString(), amount, fee, progress);
+			}
+			
+			public void makeTransaction() {
+				try {
+					final BigInteger fee = BigInteger.ZERO;
+
+					send(fee);
 					
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -253,6 +314,7 @@ public final class SendCoinsFragment extends Fragment
 
 			public void onClick(final View v)
 			{
+								
 				MyRemoteWallet remoteWallet = application.getRemoteWallet();
 
 				if (remoteWallet.isDoubleEncrypted() == false) {
@@ -290,161 +352,151 @@ public final class SendCoinsFragment extends Fragment
 		updateView();
 
 		return view;
-		}
+	}
 
-		protected void onServiceBound()
-		{
-			System.out.println("service bound");
-		}
+	protected void onServiceBound()
+	{
+		System.out.println("service bound");
+	}
 
-		protected void onServiceUnbound()
+	protected void onServiceUnbound()
+	{
+		System.out.println("service unbound");
+	}
+
+	@Override
+	public void onDestroyView()
+	{
+		handler.removeCallbacks(sentRunnable);
+
+		super.onDestroyView();
+	}
+
+	@Override
+	public void onDestroy()
+	{
+		super.onDestroy();
+	}
+
+	public class AutoCompleteAdapter extends CursorAdapter
+	{
+		public AutoCompleteAdapter(final Context context, final Cursor c)
 		{
-			System.out.println("service unbound");
+			super(context, c);
 		}
 
 		@Override
-		public void onDestroyView()
+		public View newView(final Context context, final Cursor cursor, final ViewGroup parent)
 		{
-			handler.removeCallbacks(sentRunnable);
-
-			super.onDestroyView();
+			final LayoutInflater inflater = LayoutInflater.from(context);
+			return inflater.inflate(R.layout.simple_dropdown_item_2line, parent, false);
 		}
 
 		@Override
-		public void onDestroy()
+		public void bindView(final View view, final Context context, final Cursor cursor)
 		{
-			final Activity activity = getActivity();
-
-			super.onDestroy();
+			final ViewGroup viewGroup = (ViewGroup) view;
+			((TextView) viewGroup.findViewById(android.R.id.text1)).setText(cursor.getString(cursor
+					.getColumnIndexOrThrow(AddressBookProvider.KEY_LABEL)));
+			((TextView) viewGroup.findViewById(android.R.id.text2)).setText(cursor.getString(cursor
+					.getColumnIndexOrThrow(AddressBookProvider.KEY_ADDRESS)));
 		}
 
-		public class AutoCompleteAdapter extends CursorAdapter
+		@Override
+		public CharSequence convertToString(final Cursor cursor)
 		{
-			public AutoCompleteAdapter(final Context context, final Cursor c)
-			{
-				super(context, c);
-			}
-
-			@Override
-			public View newView(final Context context, final Cursor cursor, final ViewGroup parent)
-			{
-				final LayoutInflater inflater = LayoutInflater.from(context);
-				return inflater.inflate(R.layout.simple_dropdown_item_2line, parent, false);
-			}
-
-			@Override
-			public void bindView(final View view, final Context context, final Cursor cursor)
-			{
-				final ViewGroup viewGroup = (ViewGroup) view;
-				((TextView) viewGroup.findViewById(android.R.id.text1)).setText(cursor.getString(cursor
-						.getColumnIndexOrThrow(AddressBookProvider.KEY_LABEL)));
-				((TextView) viewGroup.findViewById(android.R.id.text2)).setText(cursor.getString(cursor
-						.getColumnIndexOrThrow(AddressBookProvider.KEY_ADDRESS)));
-			}
-
-			@Override
-			public CharSequence convertToString(final Cursor cursor)
-			{
-				return cursor.getString(cursor.getColumnIndexOrThrow(AddressBookProvider.KEY_ADDRESS));
-			}
-
-			@Override
-			public Cursor runQueryOnBackgroundThread(final CharSequence constraint)
-			{
-				final Cursor cursor = getActivity().managedQuery(AddressBookProvider.CONTENT_URI, null, AddressBookProvider.SELECTION_QUERY,
-						new String[] { constraint.toString() }, null);
-				return cursor;
-			}
+			return cursor.getString(cursor.getColumnIndexOrThrow(AddressBookProvider.KEY_ADDRESS));
 		}
 
-		private void updateView()
+		@Override
+		public Cursor runQueryOnBackgroundThread(final CharSequence constraint)
 		{
-			boolean validAddress = false;
-			try
-			{
-				final String address = receivingAddressView.getText().toString().trim();
-				if (address.length() > 0)
-				{
-					new Address(Constants.NETWORK_PARAMETERS, address);
-					validAddress = true;
-				}
-				receivingAddressErrorView.setVisibility(View.GONE);
-			}
-			catch (final Exception x)
-			{
-				receivingAddressErrorView.setVisibility(View.VISIBLE);
-			}
-
-			final BigInteger amount = amountView.getAmount();
-			final boolean validAmount = amount != null && amount.signum() > 0;
-
-			BigInteger fee = feeView.getAmount();
-			
-			if (fee == null)
-				 fee = BigInteger.ZERO;
-			
-			final boolean validFee = fee != null && fee.signum() >= 0;
-
-			receivingAddressView.setEnabled(state == State.INPUT);
-
-			amountView.setEnabled(state == State.INPUT);
-
-			feeView.setEnabled(state == State.INPUT);
-
-			viewGo.setEnabled(state == State.INPUT && validAddress && validAmount && validFee);
-			if (state == State.INPUT)
-				viewGo.setText(R.string.send_coins_fragment_button_send);
-			else if (state == State.SENDING)
-				viewGo.setText(R.string.send_coins_sending_msg);
-			else if (state == State.SENT)
-				viewGo.setText(R.string.send_coins_sent_msg);
-
-			viewCancel.setEnabled(state != State.SENDING);
-			viewCancel.setText(state != State.SENT ? R.string.button_cancel : R.string.send_coins_fragment_button_back);
-		}
-
-		public void update(final String receivingAddress, final BigInteger amount)
-		{
-			receivingAddressView.setText(receivingAddress);
-			flashReceivingAddress();
-
-			if (amount != null)
-				amountView.setAmount(amount);
-
-			if (receivingAddress != null && amount == null)
-				amountView.requestFocus();
-
-			updateView();
-		}
-
-		private void showAddAddressDialog(final String address)
-		{
-			final Activity activity = getActivity();
-			final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-			builder.setMessage(R.string.send_coins_add_address_dialog_title);
-			builder.setPositiveButton(R.string.send_coins_add_address_dialog_button_add, new DialogInterface.OnClickListener()
-			{
-				public void onClick(final DialogInterface dialog, final int id)
-				{
-					EditAddressBookEntryFragment.edit(getFragmentManager(), address.toString());
-				}
-			});
-			builder.setNegativeButton(R.string.button_dismiss, null);
-			builder.show();
-		}
-
-		private Runnable resetColorRunnable = new Runnable()
-		{
-			public void run()
-			{
-				receivingAddressView.setTextColor(Color.parseColor("#888888"));
-			}
-		};
-
-		public void flashReceivingAddress()
-		{
-			receivingAddressView.setTextColor(Color.parseColor("#cc5500"));
-			handler.removeCallbacks(resetColorRunnable);
-			handler.postDelayed(resetColorRunnable, 500);
+			final Cursor cursor = getActivity().managedQuery(AddressBookProvider.CONTENT_URI, null, AddressBookProvider.SELECTION_QUERY,
+					new String[] { constraint.toString() }, null);
+			return cursor;
 		}
 	}
+
+	private void updateView()
+	{
+		boolean validAddress = false;
+		try
+		{
+			final String address = receivingAddressView.getText().toString().trim();
+			if (address.length() > 0)
+			{
+				new Address(Constants.NETWORK_PARAMETERS, address);
+				validAddress = true;
+			}
+			receivingAddressErrorView.setVisibility(View.GONE);
+		}
+		catch (final Exception x)
+		{
+			receivingAddressErrorView.setVisibility(View.VISIBLE);
+		}
+
+		final BigInteger amount = amountView.getAmount();
+		final boolean validAmount = amount != null && amount.signum() > 0;
+
+
+		receivingAddressView.setEnabled(state == State.INPUT);
+
+		amountView.setEnabled(state == State.INPUT);
+
+		viewGo.setEnabled(state == State.INPUT && validAddress && validAmount);
+		if (state == State.INPUT)
+			viewGo.setText(R.string.send_coins_fragment_button_send);
+		else if (state == State.SENDING)
+			viewGo.setText(R.string.send_coins_sending_msg);
+		else if (state == State.SENT)
+			viewGo.setText(R.string.send_coins_sent_msg);
+
+		viewCancel.setEnabled(state != State.SENDING);
+		viewCancel.setText(state != State.SENT ? R.string.button_cancel : R.string.send_coins_fragment_button_back);
+	}
+
+	public void update(final String receivingAddress, final BigInteger amount)
+	{
+		receivingAddressView.setText(receivingAddress);
+		flashReceivingAddress();
+
+		if (amount != null)
+			amountView.setAmount(amount);
+
+		if (receivingAddress != null && amount == null)
+			amountView.requestFocus();
+
+		updateView();
+	}
+
+	private void showAddAddressDialog(final String address)
+	{
+		final Activity activity = getActivity();
+		final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+		builder.setMessage(R.string.send_coins_add_address_dialog_title);
+		builder.setPositiveButton(R.string.send_coins_add_address_dialog_button_add, new DialogInterface.OnClickListener()
+		{
+			public void onClick(final DialogInterface dialog, final int id)
+			{
+				EditAddressBookEntryFragment.edit(getFragmentManager(), address.toString());
+			}
+		});
+		builder.setNegativeButton(R.string.button_dismiss, null);
+		builder.show();
+	}
+
+	private Runnable resetColorRunnable = new Runnable()
+	{
+		public void run()
+		{
+			receivingAddressView.setTextColor(Color.parseColor("#888888"));
+		}
+	};
+
+	public void flashReceivingAddress()
+	{
+		receivingAddressView.setTextColor(Color.parseColor("#cc5500"));
+		handler.removeCallbacks(resetColorRunnable);
+		handler.postDelayed(resetColorRunnable, 500);
+	}
+}

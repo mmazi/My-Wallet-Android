@@ -91,7 +91,7 @@ public final class WalletAddressFragment extends Fragment
 		{
 			public void onClick(final View v)
 			{
-				AddressBookActivity.start(activity, false);
+				WalletAddressesActivity.start(activity, false);
 			}
 		});
 
@@ -101,6 +101,9 @@ public final class WalletAddressFragment extends Fragment
 			{
 				final Address address = application.determineSelectedAddress();
 
+				if (address == null)
+					return false;
+				
 				System.out.println("selected bitcoin address: " + address + (Constants.TEST ? " [testnet]" : ""));
 
 				new AlertDialog.Builder(activity).setItems(R.array.wallet_address_fragment_context, new DialogInterface.OnClickListener()
@@ -108,7 +111,7 @@ public final class WalletAddressFragment extends Fragment
 					public void onClick(final DialogInterface dialog, final int which)
 					{
 						if (which == 0)
-							AddressBookActivity.start(activity, false);
+							WalletAddressesActivity.start(activity, false);
 						else if (which == 1)
 							showQRCode();
 						else if (which == 2)

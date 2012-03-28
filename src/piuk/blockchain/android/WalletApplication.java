@@ -108,7 +108,7 @@ public class WalletApplication extends Application
 				e.printStackTrace();
 			}
 		}
-	
+
 		bindService(new Intent(this, BlockchainService.class), serviceConnection, Context.BIND_AUTO_CREATE);
 	}
 
@@ -163,10 +163,8 @@ public class WalletApplication extends Application
 
 				if(!readLocalMultiAddr())
 					doMultiAddr();
-			
-			} else {
-				System.out.println("Loading remote");
 
+			} else {
 				Toast.makeText(WalletApplication.this, R.string.toast_downloading_wallet, Toast.LENGTH_LONG).show();
 
 				loadRemoteWallet();
@@ -185,7 +183,7 @@ public class WalletApplication extends Application
 		}
 
 		getWallet().addEventListener(walletEventListener);
-		
+
 		connect();
 	}
 
@@ -248,7 +246,7 @@ public class WalletApplication extends Application
 
 		loadRemoteWallet();
 	}
-	
+
 	public void doMultiAddr() {
 		new Thread(new Runnable() {
 			public void run() {
@@ -278,6 +276,8 @@ public class WalletApplication extends Application
 			public void run() {
 				String payload = null; 
 
+				System.out.println("loadRemoteWallet()");
+
 				//Retry 3 times
 				for (int ii = 0; ii < 3; ++ii) {
 					try {
@@ -304,21 +304,18 @@ public class WalletApplication extends Application
 					}
 				}
 
+				remoteWallet.setTemporyPassword(getPassword());
+
 				//Payload will return null when not modified
-				if (payload == null) {
-					System.out.println("Payload " + payload);
-					return;
-				}
+				if (payload != null) {
 
-				
-				
-				try {
-
-					FileOutputStream file = openFileOutput(Constants.WALLET_FILENAME, Constants.WALLET_MODE);
-					file.write(payload.getBytes("UTF-8"));
-					file.close();
-
-					remoteWallet.setTemporyPassword(getPassword());
+					try {
+						FileOutputStream file = openFileOutput(Constants.WALLET_FILENAME, Constants.WALLET_MODE);
+						file.write(payload.getBytes("UTF-8"));
+						file.close();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					
 					try {
 						if (remoteWallet == null) {
@@ -345,7 +342,10 @@ public class WalletApplication extends Application
 							AddressBookProvider.setLabel(getContentResolver(), labelObj.getKey(), labelObj.getValue());
 						}
 					}
+				}
 
+
+				try {
 					doMultiAddr();
 
 				} catch (Exception e) {
@@ -431,7 +431,7 @@ public class WalletApplication extends Application
 			Toast.makeText(WalletApplication.this, R.string.error_setting_label, Toast.LENGTH_LONG).show();
 		}
 	}
-	
+
 	public boolean readLocalMultiAddr() {
 		try {
 			//Restore the multi address cache
@@ -442,14 +442,14 @@ public class WalletApplication extends Application
 			remoteWallet.parseMultiAddr(multiAddr);
 
 			return true;
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
-			
+
 			return false;
 		}
 	}
-	
+
 	public boolean readLocalWallet() {
 		try {
 
@@ -512,7 +512,7 @@ public class WalletApplication extends Application
 				return address;
 		}
 
-		throw new IllegalStateException("address not in keychain: " + selectedAddress);
+		return null;
 	}
 
 	public final int applicationVersionCode()

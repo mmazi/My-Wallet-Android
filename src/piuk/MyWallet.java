@@ -42,15 +42,11 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.lang.ArrayUtils; 
 import org.json.simple.JSONValue; 
 
-import piuk.blockchain.android.Constants;
 
 import android.util.Base64;
 
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
-import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Base58;
-import com.google.bitcoin.core.DumpedPrivateKey;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Wallet; 
@@ -86,80 +82,6 @@ public class MyWallet {
 		root.put("address_book", address_book);
 
 		addKey(new ECKey(), "New");
-	}
-
-	public static class EncodedECKey extends ECKey {
-		private static final long serialVersionUID = 1L;
-		private final String addr;
-		private final String base58;
-		private MyWallet wallet;
-		private ECKey _key;
-
-		public EncodedECKey(String addr, String base58, MyWallet wallet) {
-			super((BigInteger)null, null);
-
-			this.base58 = base58;
-			this.addr = addr;
-			this.wallet = wallet;
-		}
-
-		private ECKey getInternalKey() {
-			if (_key == null) {
-				try {
-					this._key = wallet.decodePK(base58);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-
-			return _key;
-		}
-
-		@Override
-		public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
-			return getInternalKey().getPrivateKeyEncoded(params);
-		}
-
-		@Override
-		public boolean verify(byte[] data, byte[] signature) {
-			return getInternalKey().verify(data, signature);
-		}
-		@Override
-		public byte[] sign(byte[] input) {
-			return getInternalKey().sign(input);
-		}
-
-		@Override
-		public byte[] getPubKey() {
-			return getInternalKey().getPubKey();
-		}
-
-		@Override
-		public byte[] toASN1() {
-			return getInternalKey().toASN1();
-		}
-
-		@Override
-		public byte[] getPrivKeyBytes() {
-			return getInternalKey().getPrivKeyBytes();
-		}
-
-		/** Gets the hash160 form of the public key (as seen in addresses). */
-		@Override
-		public byte[] getPubKeyHash() {
-			return toAddress(Constants.NETWORK_PARAMETERS).getHash160();
-		}
-
-		@Override
-		public Address toAddress(NetworkParameters params) {
-			try {
-				return new Address(params, addr);
-			} catch (AddressFormatException e) {
-				e.printStackTrace();
-			}
-
-			return null;
-		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -313,7 +235,7 @@ public class MyWallet {
 	protected void addKeysTobitoinJWallet(Wallet wallet) throws Exception {
 
 		wallet.keychain.clear();
-
+		
 		for (Map<String, Object> key : this.getKeysMap()) {
 
 			String base58Priv = (String) key.get("priv");
@@ -323,7 +245,18 @@ public class MyWallet {
 				continue;
 			}
 
-			wallet.addKey(new EncodedECKey(addr, base58Priv, this));
+			MyECKey encoded_key = new MyECKey(addr, base58Priv, this);
+			
+			if (key.get("label") != null)
+				encoded_key.setLabel((String) key.get("label"));
+
+			if (key.get("tag") != null) {
+				Long tag = (Long) key.get("tag");
+				
+				encoded_key.setTag((int)(long)tag);
+			}
+			
+			wallet.addKey(encoded_key);
 		}
 	}
 
@@ -361,7 +294,6 @@ public class MyWallet {
 		}
 
 		getKeysMap().add(map);
-
 
 		return true;
 	}

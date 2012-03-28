@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:orientation="vertical" >
+	android:orientation="vertical" 
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent">
 
 	<TextView
 		android:layout_width="fill_parent"
@@ -76,14 +78,14 @@
 		android:visibility="gone" />
 
 	<TextView
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginLeft="20dp"
-		android:layout_marginRight="20dp"
-		android:layout_marginTop="8dp"
-		android:text="@string/send_coins_fragment_amount_label"
-		android:textSize="@dimen/font_size_small"
-		android:textStyle="bold" />
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_marginLeft="20dp"
+	    android:layout_marginRight="20dp"
+	    android:layout_marginTop="8dp"
+	    android:text="@string/send_coins_fragment_amount_label"
+	    android:textSize="@dimen/font_size_small"
+	    android:textStyle="bold" />
 
 	<piuk.blockchain.android.ui.CurrencyAmountView
 		android:id="@+id/send_coins_amount"
@@ -100,32 +102,28 @@
 			android:textSize="@dimen/font_size_xlarge" />
 	</piuk.blockchain.android.ui.CurrencyAmountView>
 
-	<TextView
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginLeft="20dp"
-		android:layout_marginRight="20dp"
-		android:layout_marginTop="8dp"
-		android:text="@string/send_coins_fragment_fee_label"
-		android:textSize="@dimen/font_size_small"
-		android:textStyle="bold" />
 
-	<piuk.blockchain.android.ui.CurrencyAmountView
-		android:id="@+id/send_coins_fee"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:layout_marginLeft="12dp"
-		android:layout_marginRight="12dp" >
-
-		<EditText
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:background="@drawable/edit_text"
-			android:drawablePadding="4dp"
-			android:textSize="@dimen/font_size_xlarge" />
-	</piuk.blockchain.android.ui.CurrencyAmountView>
 
 	<!-- stretch dummy -->
+
+	<TextView
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_marginLeft="20dp"
+	    android:layout_marginRight="20dp"
+	    android:layout_marginTop="16dp"
+	    android:text="@string/send_coins_fragment_need_btc"
+	    android:textSize="@dimen/font_size_small"
+	    android:textStyle="bold" />
+
+	<Button
+	    android:id="@+id/instant_deposit"
+	    android:layout_width="144dp"
+	    android:layout_height="wrap_content"
+	    android:layout_marginLeft="20dp"
+	    android:layout_marginRight="20dp"
+	    android:layout_marginTop="8dp"
+	    android:text="@string/send_coins_fragment_instant_deposit" />
 
 	<ImageView
 		android:layout_width="wrap_content"
@@ -145,19 +143,22 @@
 		<TableRow>
 
 			<Button
-				android:id="@+id/send_coins_go"
-				android:background="@drawable/btn_default"
-				android:paddingLeft="12dp"
-				android:paddingRight="12dp"
-				android:textSize="@dimen/font_size_small"
-				android:textStyle="bold" />
+			    android:id="@+id/send_coins_go"
+			    android:background="@drawable/btn_default"
+			    android:paddingLeft="12dp"
+			    android:paddingRight="12dp"
+			    android:text="@string/send_coins_fragment_button_send"
+			    android:textSize="@dimen/font_size_small"
+			    android:textStyle="bold" />
 
 			<Button
-				android:id="@+id/send_coins_cancel"
-				android:background="@drawable/btn_default"
-				android:paddingLeft="12dp"
-				android:paddingRight="12dp"
-				android:textSize="@dimen/font_size_small" />
+			    android:id="@+id/send_coins_cancel"
+			    android:background="@drawable/btn_default"
+			    android:paddingLeft="12dp"
+			    android:paddingRight="12dp"
+			    android:text="@string/send_coins_fragment_button_back"
+			    android:textSize="@dimen/font_size_small" />
+
 		</TableRow>
 	</TableLayout>
 

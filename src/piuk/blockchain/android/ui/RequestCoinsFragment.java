@@ -137,6 +137,10 @@ public final class RequestCoinsFragment extends Fragment
 			{
 				final ClipboardManager clipboardManager = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
 				final String addressStr = determineAddressStr();
+				
+				if (addressStr == null)
+					return;
+				
 				clipboardManager.setText(addressStr);
 				((AbstractWalletActivity) getActivity()).toast(R.string.request_coins_clipboard_msg);
 
@@ -166,6 +170,9 @@ public final class RequestCoinsFragment extends Fragment
 	{
 		final String addressStr = determineAddressStr();
 
+		if (addressStr == null)
+			return;
+	
 		if (qrCodeBitmap != null)
 			qrCodeBitmap.recycle();
 
@@ -184,6 +191,10 @@ public final class RequestCoinsFragment extends Fragment
 	private String determineAddressStr()
 	{
 		final Address address = application.determineSelectedAddress();
+		
+		if (address == null)
+			return null;
+		
 		final BigInteger amount = amountView.getAmount();
 
 		return BitcoinURI.convertToBitcoinURI(address, amount, null, null).toString();

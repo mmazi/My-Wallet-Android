@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:installLocation="preferExternal"
     package="piuk.blockchain"
-    android:versionCode="83"
-    android:versionName="2.7" >
+    android:versionCode="84"
+    android:versionName="2.8" >
 
     <uses-sdk
         android:minSdkVersion="7"
@@ -109,7 +109,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="piuk.blockchain.android.ui.AddressBookActivity"
+            android:name=".android.ui.WalletAddressesActivity"
             android:configChanges="orientation|keyboard|keyboardHidden"
             android:screenOrientation="behind"
             android:theme="@android:style/Theme.Light.NoTitleBar" />

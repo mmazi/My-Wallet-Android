@@ -35,6 +35,8 @@ import org.json.simple.JSONValue;
 import piuk.MyBlockChain.MyBlock;
 import piuk.blockchain.android.Constants;
 
+import android.util.Pair;
+
 import com.google.bitcoin.bouncycastle.util.encoders.Hex;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
@@ -45,6 +47,7 @@ import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletTransaction;
 import com.google.bitcoin.core.Transaction.SigHash;
+import com.google.bitcoin.core.Wallet.BalanceType;
 
 
 @SuppressWarnings("unchecked")
@@ -81,7 +84,7 @@ public class MyRemoteWallet extends MyWallet {
 
 		@Override
 		public synchronized BigInteger getBalance() {
-			return final_balance;
+				return final_balance;
 		}
 
 		@Override
@@ -194,20 +197,21 @@ public class MyRemoteWallet extends MyWallet {
 
 	@Override
 	public synchronized boolean addKey(ECKey key, String label) throws Exception {
-		if (_wallet != null) {
-			_wallet.addKey(key);
-			
+		boolean success = super.addKey(key, label);
+		
+		if (_wallet != null && success) {
+			addKeysTobitoinJWallet(_wallet);
 			_wallet.invokeOnChange();
 		}
 
-		return super.addKey(key, label);
+		return success;
 	}
 
 	@Override
 	public RemoteBitcoinJWallet getBitcoinJWallet() {
 		return _wallet;
 	}
-
+ 
 	public List<MyTransaction> getMyTransactions() {
 		List<MyTransaction> transactions = new ArrayList<MyTransaction>(_wallet.n_tx);
 
@@ -309,6 +313,8 @@ public class MyRemoteWallet extends MyWallet {
 	}
 
 	public interface SendProgress {
+		//Return false to cancel
+		public boolean onReady(Transaction tx, BigInteger fee, long priority);
 		public void onSend(Transaction tx, String message);
 		public void onError(String message);
 		public void onProgress(String message);
@@ -327,8 +333,20 @@ public class MyRemoteWallet extends MyWallet {
 
 					progress.onProgress("Constructing Transaction");
 
-					Transaction tx = makeTransaction(unspent, toAddress, amount, fee);
+					Pair<Transaction, Long> pair = makeTransaction(unspent, toAddress, amount, fee);
 
+					//Transaction cancelled
+					if (pair == null) 
+						return;
+					
+					Transaction tx = pair.first;
+					Long priority = pair.second;
+					
+					//If returns false user cancelled
+					//Probably because they want to recreate the transaction with different fees
+					if (!progress.onReady(tx, fee, priority))
+						return;
+										
 					progress.onProgress("Signing Inputs");
 
 					//Now sign the inputs						
@@ -363,10 +381,12 @@ public class MyRemoteWallet extends MyWallet {
 	}
 
 	//You must sign the inputs
-	public Transaction makeTransaction(List<MyTransactionOutPoint> unspent, String toAddress, BigInteger amount, BigInteger fee) throws Exception {
+	public Pair<Transaction, Long> makeTransaction(List<MyTransactionOutPoint> unspent, String toAddress, BigInteger amount, BigInteger fee) throws Exception {
+
+		long priority = 0;
 
 		if (unspent == null || unspent.size() == 0)
-			throw new Exception("No free outputs to spend");
+			throw new Exception("No free outputs to spend. Some transactions maybe pending confirmation.");
 
 		if (fee == null)
 			fee = BigInteger.ZERO;
@@ -399,6 +419,8 @@ public class MyRemoteWallet extends MyWallet {
 
 			valueSelected = valueSelected.add(outPoint.value);
 
+			priority += outPoint.value.longValue() * outPoint.confirmations;
+
 			if (firstOutPoint == null) 
 				firstOutPoint = outPoint;
 
@@ -411,8 +433,8 @@ public class MyRemoteWallet extends MyWallet {
 			throw new Exception("Insufficient Funds");
 		}
 
-		BigInteger change = valueSelected.subtract(amount);
-
+		BigInteger change = valueSelected.subtract(amount).subtract(fee);
+		
 		//Now add the change if there is any
 		if (change.compareTo(BigInteger.ZERO) > 0) {						
 			BitcoinScript inputScript = new BitcoinScript(firstOutPoint.getConnectedPubKeyScript());
@@ -424,8 +446,12 @@ public class MyRemoteWallet extends MyWallet {
 
 			tx.addOutput(change_output);
 		}
+		
+		long estimatedSize = tx.bitcoinSerialize().length + (114 * tx.getInputs().size());
 
-		return tx;
+		priority /= estimatedSize;
+
+		return new Pair<Transaction, Long>(tx, priority);
 	}
 
 	public List<MyTransactionOutPoint> getUnspentOutputPoints() throws Exception {
