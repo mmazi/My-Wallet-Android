@@ -120,8 +120,6 @@ public class MyRemoteWallet extends MyWallet {
 
 		this.temporyPassword = password; 
 
-		System.out.println("Modified base64 " + base64Payload);
-
 		this._checksum  = new String(Hex.encode(MessageDigest.getInstance("SHA-256").digest(base64Payload.getBytes("UTF-8"))));
 
 		this._isNew = false;
@@ -142,17 +140,13 @@ public class MyRemoteWallet extends MyWallet {
 			connection.setInstanceFollowRedirects(false);
 
 			connection.connect();
-
-			if (connection.getResponseCode() != 200) {
-				throw new Exception("Invalid HTTP Response code " + connection.getResponseCode());
-			}
-
-			String response = IOUtils.toString(connection.getInputStream(), "UTF-8");
-
-			if (connection.getResponseCode() == 500)
-				throw new Exception("Inavlid Response " + response);
+			
+			if (connection.getResponseCode() == 200)
+				return IOUtils.toString(connection.getInputStream(), "UTF-8");
+			else if (connection.getResponseCode() == 500 && connection.getContentType().equals("text/plain"))
+				throw new Exception("Error From Server: " +  IOUtils.toString(connection.getErrorStream(), "UTF-8"));
 			else
-				return response;
+				throw new Exception("Unknowm reponse from server");
 
 		} finally {
 			connection.disconnect();
@@ -186,7 +180,7 @@ public class MyRemoteWallet extends MyWallet {
 			connection.setInstanceFollowRedirects(false);
 
 			if (connection.getResponseCode() == 500)
-				throw new Exception("Invalid Response " + IOUtils.toString(connection.getErrorStream(), "UTF-8"));
+				throw new Exception("Error Response " + IOUtils.toString(connection.getErrorStream(), "UTF-8"));
 			else
 				return IOUtils.toString(connection.getInputStream(), "UTF-8");
 
@@ -288,9 +282,6 @@ public class MyRemoteWallet extends MyWallet {
 	}
 
 	public synchronized String doMultiAddr() throws Exception {
-
-		System.out.println("Do multi addr");
-
 		StringBuffer buffer =  new StringBuffer(WebROOT + "multiaddr?");
 
 		for (Map<String, Object> map : this.getKeysMap()) {
@@ -518,8 +509,6 @@ public class MyRemoteWallet extends MyWallet {
 			kaptcha = "";
 
 		String urlEncodedPayload = URLEncoder.encode(payload);
-
-		System.out.println("Kaptcha " + kaptcha);
 
 		postURL(WebROOT + "wallet", "guid="+URLEncoder.encode(this.getGUID(), "utf-8")+"&sharedKey="+URLEncoder.encode(this.getSharedKey(), "utf-8")+"&payload="+urlEncodedPayload+"&method="+method+"&length="+(payload.length())+"&checksum="+URLEncoder.encode(_checksum, "utf-8")+"&kaptcha="+kaptcha);
 		

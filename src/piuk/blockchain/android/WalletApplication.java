@@ -132,7 +132,7 @@ public class WalletApplication extends Application
 							}
 						});
 					}
-				}, 10000);
+				}, 2000);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -214,7 +214,7 @@ public class WalletApplication extends Application
 	public void notifyWidgets()
 	{
 		final Context context = getApplicationContext();
-
+ 
 		// notify widgets
 		final AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
 		for (final AppWidgetProviderInfo providerInfo : appWidgetManager.getInstalledProviders())
@@ -274,6 +274,8 @@ public class WalletApplication extends Application
 
 	public synchronized void syncWithMyWallet() {	
 
+		System.out.println("syncWithMyWallet()");
+		
 		//Can't sync a new wallet
 		if (remoteWallet.isNew())
 			return;
@@ -321,14 +323,14 @@ public class WalletApplication extends Application
 							payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey());
 						else
 							payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey(), remoteWallet.getChecksum());
-					} catch (Exception e) {
+					} catch (final Exception e) {
 						e.printStackTrace();
 
 						writeException(e);
 
 						handler.post(new Runnable() {
 							public void run() {
-								Toast.makeText(WalletApplication.this, R.string.toast_wallet_download_failed, Toast.LENGTH_SHORT).show();
+								Toast.makeText(WalletApplication.this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
 							}
 						});
 

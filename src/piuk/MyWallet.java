@@ -235,7 +235,7 @@ public class MyWallet {
 	protected void addKeysTobitoinJWallet(Wallet wallet) throws Exception {
 
 		wallet.keychain.clear();
-		
+
 		for (Map<String, Object> key : this.getKeysMap()) {
 
 			String base58Priv = (String) key.get("priv");
@@ -246,16 +246,16 @@ public class MyWallet {
 			}
 
 			MyECKey encoded_key = new MyECKey(addr, base58Priv, this);
-			
+
 			if (key.get("label") != null)
 				encoded_key.setLabel((String) key.get("label"));
 
 			if (key.get("tag") != null) {
 				Long tag = (Long) key.get("tag");
-				
+
 				encoded_key.setTag((int)(long)tag);
 			}
-			
+
 			wallet.addKey(encoded_key);
 		}
 	}
@@ -320,7 +320,7 @@ public class MyWallet {
 
 	//AES 256 PBKDF2 CBC iso10126 decryption
 	//16 byte IV must be prepended to ciphertext - Compatible with crypto-js
-	public static String decrypt(String ciphertext, String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException{
+	public static String decrypt(String ciphertext, String password) throws Exception {
 		byte[] cipherdata = Base64.decode(ciphertext, Base64.NO_WRAP);
 
 		//Sperate the IV and cipher data
@@ -336,14 +336,10 @@ public class MyWallet {
 		SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
 
 		byte[] output = null;
-		try{
-			Cipher cipher = Cipher.getInstance("AES/CBC/ISO10126Padding");
-			cipher.init(Cipher.DECRYPT_MODE, secret, ivspec);
-			output = cipher.doFinal(input);
-		} catch(Exception e){
-			e.printStackTrace();
-			return null;
-		}
+
+		Cipher cipher = Cipher.getInstance("AES/CBC/ISO10126Padding");
+		cipher.init(Cipher.DECRYPT_MODE, secret, ivspec);
+		output = cipher.doFinal(input);
 
 		return new String(output, "UTF-8");
 	}
@@ -368,25 +364,19 @@ public class MyWallet {
 		IvParameterSpec ivspec = new IvParameterSpec(iv);
 
 		SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
-		try{
-			Cipher cipher = Cipher.getInstance("AES/CBC/ISO10126Padding");
-			cipher.init(Cipher.ENCRYPT_MODE, secret, ivspec);
+		Cipher cipher = Cipher.getInstance("AES/CBC/ISO10126Padding");
+		cipher.init(Cipher.ENCRYPT_MODE, secret, ivspec);
 
-			byte[] output = cipher.doFinal(textbytes);
+		byte[] output = cipher.doFinal(textbytes);
 
-			//Append to IV to the output
-			byte[] ivAppended = ArrayUtils.addAll(iv, output);
+		//Append to IV to the output
+		byte[] ivAppended = ArrayUtils.addAll(iv, output);
 
-			return new String(Base64.encode(ivAppended, Base64.NO_WRAP), "UTF-8");
-
-		} catch(Exception e){
-			e.printStackTrace();
-			return null;
-		}
+		return new String(Base64.encode(ivAppended, Base64.NO_WRAP), "UTF-8");
 	}
 
 	//Decrypt a double encrypted private key
-	public static String decryptPK(String key, String sharedKey, String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException {
+	public static String decryptPK(String key, String sharedKey, String password) throws Exception {
 		return decrypt(key, sharedKey + password);
 	}
 
@@ -397,7 +387,7 @@ public class MyWallet {
 
 	//Decrypt a Wallet file and parse the JSON
 	@SuppressWarnings("unchecked")
-	public static Map<String, Object> decryptPayload(String payload, String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException {
+	public static Map<String, Object> decryptPayload(String payload, String password) throws Exception {
 		if (payload == null || payload.length() == 0 || password == null || password.length() == 0)
 			return null;
 
