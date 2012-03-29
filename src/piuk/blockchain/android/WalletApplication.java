@@ -148,8 +148,11 @@ public class WalletApplication extends Application
 
 		try {
 			//Need to save session cookie for kaptcha
-			CookieManager cookieManager = new CookieManager();
+	        @SuppressWarnings("rawtypes")
+			Class aClass = getClass().getClassLoader().loadClass("java.net.CookieManager");
 
+	        CookieManager cookieManager = (CookieManager) aClass.newInstance();
+	        
 			CookieHandler.setDefault(cookieManager);
 		} catch (Exception e) {
 			e.printStackTrace();
