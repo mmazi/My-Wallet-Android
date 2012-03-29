@@ -41,6 +41,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.lang.ArrayUtils; 
 import org.json.simple.JSONValue; 
+import org.json.simple.parser.JSONParser;
 
 
 import android.util.Base64;
@@ -396,7 +397,9 @@ public class MyWallet {
 		if (decrypted == null || decrypted.length() == 0)
 			return null;
 
-		return (Map<String, Object>) JSONValue.parse(decrypted);
+		JSONParser parser = new JSONParser();
+       
+		return (Map<String, Object>) parser.parse(decrypted);
 	}
 
 }
