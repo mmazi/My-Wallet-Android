@@ -48,6 +48,7 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.webkit.WebView;
 import android.widget.ImageButton;
+import android.widget.Toast;
 import piuk.blockchain.R;
 import piuk.blockchain.android.BlockchainService;
 import piuk.blockchain.android.Constants;
@@ -269,7 +270,25 @@ public final class WalletActivity extends AbstractWalletActivity
 			intent.putExtra(SendCoinsActivity.INTENT_EXTRA_ADDRESS, Constants.DONATION_ADDRESS);
 			startActivity(intent);
 			return true;
+			
 
+		case R.id.wallet_options_bug:
+			Intent i = new Intent(Intent.ACTION_SEND);
+			i.setType("text/plain");
+			i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"support@pi.uk.com"});
+			i.putExtra(Intent.EXTRA_SUBJECT, "Exception Report");
+			
+			String log = application.readExceptionLog();
+			if (log != null)
+				i.putExtra(Intent.EXTRA_TEXT, log);
+			
+			try {
+			    startActivity(Intent.createChooser(i, "Send mail..."));
+			} catch (android.content.ActivityNotFoundException ex) {
+			    Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+			}
+			
+			return true;
 		case R.id.wallet_options_help:
 			showDialog(DIALOG_HELP);
 			return true;

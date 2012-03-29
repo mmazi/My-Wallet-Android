@@ -40,6 +40,9 @@ public class Constants
 	static final String WALLET_FILENAME = "wallet.aes.json";
 	
 	static final String MULTIADDR_FILENAME = "multiaddr.cache.json";
+	
+	static final String EXCEPTION_LOG = "exception.log";
+
 	public final static long MultiAddrTimeThreshold =  60000; //1 minute
 	
 	private static final String WALLET_KEY_BACKUP_BASE58_PROD = "key-backup-base58";

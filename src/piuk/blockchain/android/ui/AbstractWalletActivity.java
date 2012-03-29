@@ -38,7 +38,7 @@ import piuk.blockchain.android.util.ActionBarFragment;
  */
 public abstract class AbstractWalletActivity extends FragmentActivity
 {
-	private WalletApplication application;
+	protected WalletApplication application;
 	private ActionBarFragment actionBar;
 
 	@Override

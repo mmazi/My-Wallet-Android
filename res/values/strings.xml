@@ -20,6 +20,8 @@
 
 	<string name="error_pairing_wallet">Error pairing wallet.</string>
 
+	<string name="wallet_options_bug">Bug Report</string>
+
 	<string name="second_password_text">This action requires a second password in order to
 		fully decrypt your bitcoin wallet. Please enter your second password
 		below.</string>

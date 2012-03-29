@@ -28,9 +28,9 @@ public class PairWalletActivity extends AbstractWalletActivity {
 		final ActionBarFragment actionBar = getActionBar();
 
 		actionBar.setPrimaryTitle(R.string.pair_wallet_title);
-		
+
 		//showQRReader();	
-		
+
 		actionBar.setBack(new OnClickListener()
 		{
 			public void onClick(final View v)
@@ -47,69 +47,79 @@ public class PairWalletActivity extends AbstractWalletActivity {
 			}
 		});
 	}
-	
-	
-	
+
+
+
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, final Intent intent)
 	{
 		if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK && "QR_CODE".equals(intent.getStringExtra("SCAN_RESULT_FORMAT")))
 		{
-			final String contents = intent.getStringExtra("SCAN_RESULT");
+			final WalletApplication application = (WalletApplication) getApplication();
 
-			String[] components = contents.split("\\|", Pattern.LITERAL);
+			try {
+				final String contents = intent.getStringExtra("SCAN_RESULT");
 
-			System.out.println(components.length);
+				String[] components = contents.split("\\|", Pattern.LITERAL);
 
-			if (components.length < 3) {
-				errorDialog(R.string.error_pairing_wallet, "Invalid Pairing QR Code");
-				return;
-			}
+				System.out.println(components.length);
 
-			String guid = components[0];
-			String sharedKey = components[1];
-			String password = components[2];
+				if (components.length < 3 || contents.length() < 36+36+3) {
+					errorDialog(R.string.error_pairing_wallet, "Invalid Pairing QR Code");
+					return;
+				}
 
-			if (guid == null || guid.length() == 0) {
-				errorDialog(R.string.error_pairing_wallet, "Invalid GUID");
-				return;
-			}
+				String guid = contents.substring(0, 36);
+				String sharedKey = contents.substring(37, 73);
+				String password = contents.substring(74, contents.length());
 
-			if (sharedKey == null || sharedKey.length() == 0) {
-				errorDialog(R.string.error_pairing_wallet, "Invalid sharedKey");
-				return;
-			}
+				if (guid == null || guid.length() == 0) {
+					errorDialog(R.string.error_pairing_wallet, "Invalid GUID");
+					return;
+				}
 
-			if (password == null || password.length() <= 10) {
-				errorDialog(R.string.error_pairing_wallet, "Password must be greater than 10 characters in length");
-				return;
-			}
+				if (sharedKey == null || sharedKey.length() == 0) {
+					errorDialog(R.string.error_pairing_wallet, "Invalid sharedKey");
+					return;
+				}
 
+				if (password == null || password.length() <= 10) {
+					errorDialog(R.string.error_pairing_wallet, "Password must be greater than 10 characters in length");
+					return;
+				}
 
-			Editor edit = PreferenceManager.getDefaultSharedPreferences(this).edit();
+				Editor edit = PreferenceManager.getDefaultSharedPreferences(this).edit();
 
-			edit.putString("guid", guid);
-			edit.putString("sharedKey", sharedKey);
-			edit.putString("password", password);
-			
-			if (edit.commit()) {
-				final WalletApplication application = (WalletApplication) getApplication();
+				edit.putString("guid", guid);
+				edit.putString("sharedKey", sharedKey);
+				edit.putString("password", password);
 
-				new Thread() {
-					@Override
-					public void run() {
-						try {
-							application.loadRemoteWallet();
-						} catch (Exception e) {
-							e.printStackTrace();
+				if (edit.commit()) {
+
+					new Thread() {
+						@Override
+						public void run() {
+							try {
+								application.loadRemoteWallet();
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
 						}
-					}
-				}.start(); 
-			} else {
-				errorDialog(R.string.error_pairing_wallet, "Error saving preferences");
+					}.start(); 
+				} else {
+					errorDialog(R.string.error_pairing_wallet, "Error saving preferences");
+				}
+
+			} catch (Exception e) {
+				errorDialog(R.string.error_pairing_wallet, "Unknown Exception caught. Please submit a bug report");
+
+				e.printStackTrace();
+
+				application.writeException(e);
 			}
 		}
 
+		
 		finish();
 	}
 	public void showQRReader() {

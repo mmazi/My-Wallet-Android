@@ -20,6 +20,7 @@ package piuk.blockchain.android;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.util.ArrayList;
@@ -225,9 +226,39 @@ public class WalletApplication extends Application
 		}
 	}
 
+	public synchronized String readExceptionLog()  {
+		try {
+			FileInputStream multiaddrCacheFile = openFileInput(Constants.EXCEPTION_LOG);
+
+			return IOUtils.toString(multiaddrCacheFile);
+			
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			
+			return null;
+		}
+	}
+
+	public synchronized void writeException(Exception e) {
+		try {
+			FileOutputStream file = openFileOutput(Constants.EXCEPTION_LOG, MODE_APPEND);
+
+			PrintStream stream = new PrintStream(file);
+
+			e.printStackTrace(stream);
+
+			stream.close();
+
+			file.close();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+
 	public synchronized void writeMultiAddrCache(String repsonse) {
 		try {
 			FileOutputStream file = openFileOutput(remoteWallet.getGUID() + Constants.MULTIADDR_FILENAME, Constants.WALLET_MODE);
+
 
 			file.write(repsonse.getBytes());
 
@@ -261,6 +292,8 @@ public class WalletApplication extends Application
 				} catch (Exception e) {
 					e.printStackTrace();
 
+					writeException(e);
+
 					handler.post(new Runnable() {
 						public void run() {
 							Toast.makeText(WalletApplication.this, R.string.toast_error_downloading_transactions, Toast.LENGTH_LONG).show();
@@ -275,7 +308,7 @@ public class WalletApplication extends Application
 		new Thread(new Runnable() {
 			public void run() {
 				String payload = null; 
-
+				
 				System.out.println("loadRemoteWallet()");
 
 				//Retry 3 times
@@ -285,10 +318,10 @@ public class WalletApplication extends Application
 							payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey());
 						else
 							payload = MyRemoteWallet.getWalletPayload(getGUID(), getSharedKey(), remoteWallet.getChecksum());
-
-						break;
 					} catch (Exception e) {
 						e.printStackTrace();
+
+						writeException(e);
 
 						handler.post(new Runnable() {
 							public void run() {
@@ -304,7 +337,6 @@ public class WalletApplication extends Application
 					}
 				}
 
-				remoteWallet.setTemporyPassword(getPassword());
 
 				//Payload will return null when not modified
 				if (payload != null) {
@@ -316,15 +348,21 @@ public class WalletApplication extends Application
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
-					
+
 					try {
+						
 						if (remoteWallet == null) {
 							remoteWallet = new MyRemoteWallet(payload, getPassword());
 						} else {
+							remoteWallet.setTemporyPassword(getPassword());
+
 							remoteWallet.setPayload(payload);
+						
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
+
+						writeException(e);
 
 						handler.post(new Runnable()
 						{
@@ -336,20 +374,28 @@ public class WalletApplication extends Application
 						return;
 					}
 
-					//Copy our labels into the address book
-					if (remoteWallet.getLabelMap() != null) {
-						for(Entry<String, String> labelObj : remoteWallet.getLabelMap().entrySet()) {
-							AddressBookProvider.setLabel(getContentResolver(), labelObj.getKey(), labelObj.getValue());
+					try {
+
+						//Copy our labels into the address book
+						if (remoteWallet.getLabelMap() != null) {
+							for(Entry<String, String> labelObj : remoteWallet.getLabelMap().entrySet()) {
+								AddressBookProvider.setLabel(getContentResolver(), labelObj.getKey(), labelObj.getValue());
+							}
 						}
+					} catch (Exception e) {
+						e.printStackTrace();
+
+						writeException(e);
 					}
 				}
 
 
 				try {
 					doMultiAddr();
-
 				} catch (Exception e) {
 					e.printStackTrace();
+
+					writeException(e);
 
 					handler.post(new Runnable()
 					{
@@ -385,6 +431,8 @@ public class WalletApplication extends Application
 					} catch (Exception e) {
 						e.printStackTrace();
 
+						writeException(e);
+
 						handler.post(new Runnable()
 						{
 							public void run()
@@ -398,6 +446,8 @@ public class WalletApplication extends Application
 
 		} catch (Exception e) {
 			e.printStackTrace();
+
+			writeException(e);
 		}
 
 		localSaveWallet();
@@ -414,6 +464,8 @@ public class WalletApplication extends Application
 						remoteWallet.remoteSave();
 					} catch (Exception e) {
 						e.printStackTrace();
+
+						writeException(e);
 
 						handler.post(new Runnable()
 						{
@@ -444,6 +496,8 @@ public class WalletApplication extends Application
 			return true;
 
 		} catch (Exception e) {
+			writeException(e);
+
 			e.printStackTrace();
 
 			return false;
@@ -452,9 +506,6 @@ public class WalletApplication extends Application
 
 	public boolean readLocalWallet() {
 		try {
-
-			System.out.println("Password " + getPassword());
-
 			//Read the wallet from local file
 			FileInputStream file = openFileInput(Constants.WALLET_FILENAME);
 
@@ -466,6 +517,8 @@ public class WalletApplication extends Application
 
 			return true;
 		} catch (Exception e) {
+			writeException(e);
+
 			e.printStackTrace();
 
 			handler.post(new Runnable()
