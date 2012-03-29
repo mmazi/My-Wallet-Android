@@ -399,7 +399,13 @@ public class MyWallet {
 
 		JSONParser parser = new JSONParser();
        
-		return (Map<String, Object>) parser.parse(decrypted);
+		try {
+			return (Map<String, Object>) parser.parse(decrypted);
+		} catch (Exception e) {
+			System.out.println(decrypted);
+			
+			throw e;
+		}
 	}
 
 }
