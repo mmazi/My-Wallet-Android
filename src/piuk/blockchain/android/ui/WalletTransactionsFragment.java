@@ -339,9 +339,15 @@ public final class WalletTransactionsFragment extends Fragment
 
 						final String address;
 						if (sent)
-							address = tx.getOutputs().get(0).getScriptPubKey().getToAddress().toString();
+							if (tx.getOutputs().size() == 0)
+								address = "Unknown";
+							else
+								address = tx.getOutputs().get(0).getScriptPubKey().getToAddress().toString();
 						else
-							address = tx.getInputs().get(0).getFromAddress().toString();
+							if (tx.getInputs().size() == 0)
+								address = "Generation";
+							else
+								address = tx.getInputs().get(0).getFromAddress().toString();
 
 						final String label = AddressBookProvider.resolveLabel(activity.getContentResolver(), address);
 

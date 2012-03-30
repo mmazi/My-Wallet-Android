@@ -124,20 +124,27 @@ public class BlockchainService extends android.app.Service
 			try {
 				System.out.println("onCoinsReceived()");
 
-				final TransactionInput input = tx.getInputs().get(0);
-				final Address from = input.getFromAddress();
-				final BigInteger amount = tx.getValue(wallet);
+				if (tx.getInputs() == null || tx.getInputs().size() == 0) {
+					final BigInteger amount = tx.getValue(wallet);
 
-				handler.post(new Runnable()
-				{
-					public void run()
+					notifyCoinbaseReceived(amount);
+				} else {
+					final TransactionInput input = tx.getInputs().get(0);
+
+					final Address from = input.getFromAddress();
+					final BigInteger amount = tx.getValue(wallet);
+
+					handler.post(new Runnable()
 					{
-						notifyCoinsReceived(from, amount);
+						public void run()
+						{
+							notifyCoinsReceived(from, amount);
 
-						notifyWidgets();
+							notifyWidgets();
 
-					}
-				});
+						}
+					});
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -188,6 +195,24 @@ public class BlockchainService extends android.app.Service
 		Toast.makeText(application, tickerMsg, Toast.LENGTH_LONG).show();
 	}
 
+
+	private void notifyCoinbaseReceived(final BigInteger amount) {
+
+		final Notification notification = new Notification(R.drawable.stat_notify_received, "Newly Generated Coins", System.currentTimeMillis());
+		
+		final String msg = getString(R.string.notification_coins_received_msg, WalletUtils.formatValue(amount));
+
+		notification.setLatestEventInfo(BlockchainService.this, msg, "Newly Generated Coins",
+				PendingIntent.getActivity(BlockchainService.this, 0, new Intent(BlockchainService.this, WalletActivity.class), 0));
+
+		notification.number = 0;
+		notification.sound = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert);
+
+		nm.notify(NOTIFICATION_ID_COINS_RECEIVED, notification);
+
+		Toast.makeText(application, "Newly Generated Coins Receive", Toast.LENGTH_LONG).show();
+	
+}
 
 	private void notifyCoinsReceived(final Address from, final BigInteger amount)
 	{
@@ -329,8 +354,8 @@ public class BlockchainService extends android.app.Service
 			}
 			return arg0;
 		}
-	 }
-	
+	}
+
 	private class BlockchainStopTask extends AsyncTask<Object, Object, Object> {
 
 		@Override
@@ -340,16 +365,16 @@ public class BlockchainService extends android.app.Service
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
+
 			return arg0;
 		}
-	 }
-	
-	
+	}
+
+
 	@Override
 	public void onCreate()
 	{
-		
+
 		System.out.println("service onCreate()");
 
 		super.onCreate();
@@ -381,9 +406,9 @@ public class BlockchainService extends android.app.Service
 
 	public void start()
 	{
-		
+
 		System.out.println("start() blockchain");
-		
+
 		if (!blockChain.getRemoteWallet().isUptoDate(Constants.MultiAddrTimeThreshold)) {
 			application.syncWithMyWallet();
 		}
@@ -413,7 +438,7 @@ public class BlockchainService extends android.app.Service
 		blockChain.removePeerEventListener(peerEventListener);
 
 		stop();
-		
+
 		unregisterReceiver(broadcastReceiver);
 
 		delayHandler.removeCallbacksAndMessages(null);

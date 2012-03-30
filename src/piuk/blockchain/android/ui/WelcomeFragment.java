@@ -40,29 +40,21 @@ import piuk.blockchain.android.WalletApplication;
 public final class WelcomeFragment extends DialogFragment
 {
 	private static final String FRAGMENT_TAG = WelcomeFragment.class.getName();
-
+	
 	public static DialogFragment show(final FragmentManager fm)
 	{	
-		
-		
-		final DialogFragment prev = (DialogFragment) fm.findFragmentById(R.layout.welcome_dialog);
-		
-		final FragmentTransaction ft = fm.beginTransaction();
 
-		if (prev != null) {
-			prev.dismiss();
-			ft.remove(prev);
-		}
-		
+		FragmentTransaction ft = fm.beginTransaction();
+
 		ft.addToBackStack(null);
 		
 		final DialogFragment newFragment = instance();
 
 		newFragment.show(ft, FRAGMENT_TAG);
-
+		
 		return newFragment;
 	}
-
+	
 	private static WelcomeFragment instance()
 	{
 		final WelcomeFragment fragment = new WelcomeFragment();

@@ -20,9 +20,15 @@ package piuk.blockchain.android.ui;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.regex.Pattern;
+
+import com.google.bitcoin.core.AbstractWalletEventListener;
+import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.core.WalletEventListener;
 
 
 import android.app.AlertDialog;
@@ -37,6 +43,7 @@ import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
@@ -64,69 +71,20 @@ public final class WalletActivity extends AbstractWalletActivity
 	private static final int REQUEST_CODE_SCAN = 0;
 	private static final int DIALOG_HELP = 0;
 	private ImageButton infoButton = null;
+	private Handler handler = new Handler();
+	public long lastShowedWelcome = 0;
+	public long lastShowedDecryptionError = 0;
 
-	@Override
-	public void onActivityResult(final int requestCode, final int resultCode, final Intent intent)
-	{
-		if (requestCode == REQUEST_CODE_SCAN && resultCode == RESULT_OK && "QR_CODE".equals(intent.getStringExtra("SCAN_RESULT_FORMAT")))
-		{
-			final String contents = intent.getStringExtra("SCAN_RESULT");
+	private AbstractWalletEventListener eventListener = new AbstractWalletEventListener() {
+		public void onChange(Wallet arg0) {
 
-			String[] components = contents.split("\\|", Pattern.LITERAL);
-
-			System.out.println(components.length);
-
-			if (components.length < 3) {
-				errorDialog(R.string.error_pairing_wallet, "Invalid Pairing QR Code");
-				return;
-			}
-
-			String guid = components[0];
-			String sharedKey = components[1];
-			String password = components[2];
-
-			if (guid == null || guid.length() == 0) {
-				errorDialog(R.string.error_pairing_wallet, "Invalid GUID");
-				return;
-			}
-
-			if (sharedKey == null || sharedKey.length() == 0) {
-				errorDialog(R.string.error_pairing_wallet, "Invalid sharedKey");
-				return;
-			}
-
-			if (password == null || password.length() <= 10) {
-				errorDialog(R.string.error_pairing_wallet, "Password must be greater than 10 characters in length");
-				return;
-			}
-
-
-			Editor edit = PreferenceManager.getDefaultSharedPreferences(this).edit();
-
-			edit.putString("guid", guid);
-			edit.putString("sharedKey", sharedKey);
-			edit.putString("password", password);
-
-			if (edit.commit()) {
-				final WalletApplication application = (WalletApplication) getApplication();
-
-				new Thread() {
-					@Override
-					public void run() {
-						try {
-							application.loadRemoteWallet();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}.start();
-
-				startActivity(new Intent(this, WalletActivity.class));
-			} else {
-				errorDialog(R.string.error_pairing_wallet, "Error saving preferences");
-			}
+			handler.post(new Runnable() {
+				public void run() {
+					checkDialogs();		
+				}
+			});
 		}
-	}
+	};
 
 	public void showQRReader() {
 		if (getPackageManager().resolveActivity(Constants.INTENT_QR_SCANNER, 0) != null) {
@@ -134,6 +92,37 @@ public final class WalletActivity extends AbstractWalletActivity
 		} else 	{
 			showMarketPage(Constants.PACKAGE_NAME_ZXING);
 			longToast(R.string.send_coins_install_qr_scanner_msg);
+		}
+	}
+
+	public void checkDialogs() {
+		System.out.println("checkDialogs()");
+
+		WalletApplication application = (WalletApplication) getApplication();
+
+		if (application.hasDecryptionError) {
+			if (System.currentTimeMillis() - lastShowedDecryptionError > 10000) {
+
+				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://blockchain.info/wallet/decryption-error"));
+
+				startActivity(browserIntent);	
+				
+				lastShowedDecryptionError = System.currentTimeMillis();
+			}
+		}
+
+		if (application.isNewWallet())
+			if (System.currentTimeMillis() - lastShowedWelcome > 10000) {
+				WelcomeFragment.show(getSupportFragmentManager());
+
+				lastShowedWelcome = System.currentTimeMillis();
+			}
+
+
+		if (application.isNewWallet()) {
+			infoButton.setImageResource(R.drawable.ic_action_info_red);	
+		} else {
+			infoButton.setImageResource(R.drawable.ic_action_info);	
 		}
 	}
 
@@ -175,14 +164,8 @@ public final class WalletActivity extends AbstractWalletActivity
 			}
 		});
 
-
-		WalletApplication application = (WalletApplication) getApplication();
-
-		if (application.isNewWallet())
-			WelcomeFragment.show(getSupportFragmentManager());
-
 		infoButton = actionBar.addButton(R.drawable.ic_action_info);
-				
+
 		infoButton.setOnClickListener(new OnClickListener() {
 			public void onClick(final View v) {
 				WalletApplication application = (WalletApplication) getApplication();
@@ -214,6 +197,8 @@ public final class WalletActivity extends AbstractWalletActivity
 		}
 
 		checkVersionAndTimeskewAlert();
+
+		checkDialogs();
 	}
 
 	@Override
@@ -221,15 +206,11 @@ public final class WalletActivity extends AbstractWalletActivity
 	{
 
 		WalletApplication application = (WalletApplication) getApplication();
-			
+
 		application.connect();
 
-		if (application.isNewWallet()) {
-			infoButton.setImageResource(R.drawable.ic_action_info_red);	
-		} else {
-			infoButton.setImageResource(R.drawable.ic_action_info);	
-		}
-		
+		application.getWallet().addEventListener(eventListener);
+
 		super.onResume();
 
 		checkLowStorageAlert();
@@ -238,7 +219,11 @@ public final class WalletActivity extends AbstractWalletActivity
 	@Override
 	protected void onPause()
 	{
-		getWalletApplication().diconnectSoon();
+		WalletApplication application = (WalletApplication) getApplication();
+
+		application.diconnectSoon();
+
+		application.getWallet().removeEventListener(eventListener);
 
 		super.onPause();
 	}
@@ -270,24 +255,24 @@ public final class WalletActivity extends AbstractWalletActivity
 			intent.putExtra(SendCoinsActivity.INTENT_EXTRA_ADDRESS, Constants.DONATION_ADDRESS);
 			startActivity(intent);
 			return true;
-			
+
 
 		case R.id.wallet_options_bug:
 			Intent i = new Intent(Intent.ACTION_SEND);
 			i.setType("text/plain");
 			i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"support@pi.uk.com"});
 			i.putExtra(Intent.EXTRA_SUBJECT, "Exception Report");
-			
+
 			String log = application.readExceptionLog();
 			if (log != null)
 				i.putExtra(Intent.EXTRA_TEXT, log);
-			
+
 			try {
-			    startActivity(Intent.createChooser(i, "Send mail..."));
+				startActivity(Intent.createChooser(i, "Send mail..."));
 			} catch (android.content.ActivityNotFoundException ex) {
-			    Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
 			}
-			
+
 			return true;
 		case R.id.wallet_options_help:
 			showDialog(DIALOG_HELP);

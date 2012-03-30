@@ -91,7 +91,8 @@ public class WalletAddressesFragment extends ListFragment
 	}
 	
 	public void setKeys() {
-		List<ECKey> keys = application.getWallet().keychain;
+		@SuppressWarnings("unchecked")
+		List<ECKey> keys = (List<ECKey>) application.getWallet().keychain.clone();
 		
 		this.keys = new ArrayList<ECKey>(keys.size());
 		

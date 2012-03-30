@@ -147,8 +147,9 @@ public class MyTransaction extends Transaction implements Serializable {
 		for (Map<String, Object> inputDict : inputs) {
 			
 			Map<String, Object> prev_out_dict = (Map<String, Object>) inputDict.get("prev_out");
-			BigInteger value = BigInteger.valueOf(((Number)prev_out_dict.get("value")).longValue());
-			Address addr = new Address(Constants.NETWORK_PARAMETERS, (String)prev_out_dict.get("addr"));
+			
+			if (prev_out_dict == null)
+				continue;
 			
 			int txOutputN = 0;
 			if (prev_out_dict.get("n") != null)
@@ -158,9 +159,12 @@ public class MyTransaction extends Transaction implements Serializable {
 			
 			MyTransactionInput input = new MyTransactionInput(Constants.NETWORK_PARAMETERS, null, null, outpoint);
 			
-			input.address = addr.toString();
+			if ((String)prev_out_dict.get("addr") != null)
+				input.address = new Address(Constants.NETWORK_PARAMETERS, (String)prev_out_dict.get("addr")).toString();
 			
-			input.value = value;
+			if ((Number)prev_out_dict.get("value") != null)
+				input.value = BigInteger.valueOf(((Number)prev_out_dict.get("value")).longValue());
+
 			
 			tx.addInput(input);
 		}  

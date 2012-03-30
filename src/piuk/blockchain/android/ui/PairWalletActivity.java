@@ -9,11 +9,13 @@ import piuk.blockchain.android.util.ActionBarFragment;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class PairWalletActivity extends AbstractWalletActivity {
 	private static final int REQUEST_CODE_SCAN = 0;
@@ -95,17 +97,7 @@ public class PairWalletActivity extends AbstractWalletActivity {
 				edit.putString("password", password);
 
 				if (edit.commit()) {
-
-					new Thread() {
-						@Override
-						public void run() {
-							try {
-								application.loadRemoteWallet();
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						}
-					}.start(); 
+						application.loadRemoteWallet();
 				} else {
 					errorDialog(R.string.error_pairing_wallet, "Error saving preferences");
 				}
@@ -119,7 +111,6 @@ public class PairWalletActivity extends AbstractWalletActivity {
 			}
 		}
 
-		
 		finish();
 	}
 	public void showQRReader() {

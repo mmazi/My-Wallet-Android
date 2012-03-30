@@ -43,6 +43,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -64,6 +65,7 @@ public class WalletApplication extends Application
 	private final Handler handler = new Handler();
 	private BlockchainService service;
 	private Timer timer ;
+	public boolean hasDecryptionError = false;
 
 	private final ServiceConnection serviceConnection = new ServiceConnection()
 	{
@@ -362,9 +364,17 @@ public class WalletApplication extends Application
 							remoteWallet.setTemporyPassword(getPassword());
 
 							remoteWallet.setPayload(payload);
-						
 						}
+
+						hasDecryptionError = false; 
+						
+						getWallet().invokeOnChange();
+
 					} catch (Exception e) {
+						hasDecryptionError = true; 
+						
+						getWallet().invokeOnChange();
+						
 						e.printStackTrace();
 
 						writeException(e);
