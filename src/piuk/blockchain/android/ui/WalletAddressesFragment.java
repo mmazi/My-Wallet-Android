@@ -17,7 +17,6 @@
 
 package piuk.blockchain.android.ui;
 
-import java.math.BigInteger;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -48,9 +47,7 @@ import android.widget.TextView;
 import com.google.bitcoin.core.AbstractWalletEventListener;
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.core.Transaction;
 import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.core.WalletEventListener;
 import com.google.bitcoin.uri.BitcoinURI;
 
 import piuk.MyECKey;

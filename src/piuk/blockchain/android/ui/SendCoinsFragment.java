@@ -228,9 +228,10 @@ public final class SendCoinsFragment extends Fragment
 
 							System.out.println("On Error");
 							
-							state = State.INPUT;
+							if (message != null)
+								activity.longToast(message);
 
-							activity.longToast(message);
+							state = State.INPUT;
 
 							updateView();
 						}

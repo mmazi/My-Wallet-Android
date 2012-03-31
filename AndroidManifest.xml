@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:installLocation="preferExternal"
     package="piuk.blockchain"
-    android:versionCode="92"
+    android:versionCode="93"
     android:versionName="3.02" >
 
     <uses-sdk

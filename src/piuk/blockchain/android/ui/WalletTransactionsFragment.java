@@ -485,8 +485,20 @@ public final class WalletTransactionsFragment extends Fragment
 			try
 			{
 				final boolean sent = tx.getValue(application.getWallet()).signum() < 0;
-				final Address address = sent ? tx.getOutputs().get(0).getScriptPubKey().getToAddress() : tx.getInputs().get(0).getFromAddress();
-
+				
+				Address address = null;
+				if (sent) {
+					if (tx.getOutputs().size() == 0)
+						return;
+					
+					 address = tx.getOutputs().get(0).getScriptPubKey().getToAddress();
+				} else {
+					if (tx.getInputs().size() == 0)
+						return;
+					
+					address = tx.getInputs().get(0).getFromAddress();
+				}
+				
 				EditAddressBookEntryFragment.edit(getFragmentManager(), address.toString());
 			}
 			catch (final ScriptException x)
