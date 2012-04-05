@@ -84,7 +84,7 @@ public class MyRemoteWallet extends MyWallet {
 
 		@Override
 		public synchronized BigInteger getBalance() {
-				return final_balance;
+			return final_balance;
 		}
 
 		@Override
@@ -140,10 +140,10 @@ public class MyRemoteWallet extends MyWallet {
 			connection.setInstanceFollowRedirects(false);
 
 			connection.connect();
-			
+
 			if (connection.getResponseCode() == 200)
 				return IOUtils.toString(connection.getInputStream(), "UTF-8");
-			else if (connection.getResponseCode() == 500 && connection.getContentType().equals("text/plain"))
+			else if (connection.getResponseCode() == 500 && (connection.getContentType() == null || connection.getContentType().equals("text/plain")))
 				throw new Exception("Error From Server: " +  IOUtils.toString(connection.getErrorStream(), "UTF-8"));
 			else
 				throw new Exception("Unknowm reponse from server");
@@ -192,7 +192,7 @@ public class MyRemoteWallet extends MyWallet {
 	@Override
 	public synchronized boolean addKey(ECKey key, String label) throws Exception {
 		boolean success = super.addKey(key, label);
-		
+
 		if (_wallet != null && success) {
 			addKeysTobitoinJWallet(_wallet);
 			_wallet.invokeOnChange();
@@ -205,7 +205,7 @@ public class MyRemoteWallet extends MyWallet {
 	public RemoteBitcoinJWallet getBitcoinJWallet() {
 		return _wallet;
 	}
- 
+
 	public List<MyTransaction> getMyTransactions() {
 		List<MyTransaction> transactions = new ArrayList<MyTransaction>(_wallet.n_tx);
 
@@ -221,9 +221,9 @@ public class MyRemoteWallet extends MyWallet {
 	public void parseMultiAddr(String response) throws Exception {
 
 		_wallet.clearTransactions(0);
-		
+
 		BigInteger previousBalance = _wallet.final_balance;
-		
+
 		Map<String, Object> top = (Map<String, Object>) JSONValue.parse(response);
 
 		Map<String, Object> info_obj = (Map<String, Object>) top.get("info");
@@ -307,6 +307,10 @@ public class MyRemoteWallet extends MyWallet {
 		//Return false to cancel
 		public boolean onReady(Transaction tx, BigInteger fee, long priority);
 		public void onSend(Transaction tx, String message);
+
+		//Return true to cancel the transaction or false to continue without it
+		public ECKey onPrivateKeyMissing(String address);
+
 		public void onError(String message);
 		public void onProgress(String message);
 	}
@@ -315,12 +319,37 @@ public class MyRemoteWallet extends MyWallet {
 
 		new Thread() {
 			@Override
-			public void run() {			
+			public void run() {		
+				List<ECKey> tempKeys = new ArrayList<ECKey>();
+
 				try {
 					//Construct a new transaction
 					progress.onProgress("Getting Unspent Outputs");
 
 					List<MyTransactionOutPoint> unspent = getUnspentOutputPoints();
+					List<MyTransactionOutPoint> toRemove = new ArrayList<MyTransactionOutPoint>();
+					
+					for (MyTransactionOutPoint output : unspent) {						
+						BitcoinScript script = new BitcoinScript(output.getScriptBytes());
+
+						Map<String, Object> keyMap = findKey(script.getAddress().toString());
+
+						if (keyMap.get("priv") == null) {
+							ECKey key = progress.onPrivateKeyMissing(script.getAddress().toString());
+							
+							if (key != null) {
+								tempKeys.add(key);
+							} else {
+								toRemove.add(output);
+							}
+						}
+					}
+
+					//Remove those outputs which we could not find a private key for
+					unspent.removeAll(toRemove);
+					
+					//Add the temporary private keys (From paper wallet)
+					getBitcoinJWallet().keychain.addAll(tempKeys);
 
 					progress.onProgress("Constructing Transaction");
 
@@ -329,15 +358,15 @@ public class MyRemoteWallet extends MyWallet {
 					//Transaction cancelled
 					if (pair == null) 
 						return;
-					
+
 					Transaction tx = pair.first;
 					Long priority = pair.second;
-					
+
 					//If returns false user cancelled
 					//Probably because they want to recreate the transaction with different fees
 					if (!progress.onReady(tx, fee, priority))
 						return;
-										
+
 					progress.onProgress("Signing Inputs");
 
 					//Now sign the inputs						
@@ -353,6 +382,9 @@ public class MyRemoteWallet extends MyWallet {
 					e.printStackTrace();
 
 					progress.onError(e.getLocalizedMessage());
+
+				} finally {
+					getBitcoinJWallet().keychain.removeAll(tempKeys);
 				}
 			}
 		}.start();
@@ -389,9 +421,9 @@ public class MyRemoteWallet extends MyWallet {
 		Transaction tx = new Transaction(params);
 
 		//Add the output
-		BitcoinScript script = BitcoinScript.createSimpleOutBitoinScript(new BitcoinAddress(toAddress));
+		BitcoinScript toOutputScript = BitcoinScript.createSimpleOutBitoinScript(new BitcoinAddress(toAddress));
 
-		TransactionOutput output = new TransactionOutput(params, null, amount, script.getProgram());
+		TransactionOutput output = new TransactionOutput(params, null, amount, toOutputScript.getProgram());
 
 		tx.addOutput(output);
 
@@ -401,6 +433,11 @@ public class MyRemoteWallet extends MyWallet {
 		MyTransactionOutPoint firstOutPoint = null;
 
 		for (MyTransactionOutPoint outPoint : unspent) {
+
+			BitcoinScript script = new BitcoinScript(outPoint.getScriptBytes());
+
+			if (script.getOutType() == BitcoinScript.ScriptOutTypeStrange)
+				continue;
 
 			MyTransactionInput input = new MyTransactionInput(params, null, new byte[0], outPoint);
 
@@ -425,7 +462,7 @@ public class MyRemoteWallet extends MyWallet {
 		}
 
 		BigInteger change = valueSelected.subtract(amount).subtract(fee);
-		
+
 		//Now add the change if there is any
 		if (change.compareTo(BigInteger.ZERO) > 0) {						
 			BitcoinScript inputScript = new BitcoinScript(firstOutPoint.getConnectedPubKeyScript());
@@ -437,7 +474,7 @@ public class MyRemoteWallet extends MyWallet {
 
 			tx.addOutput(change_output);
 		}
-		
+
 		long estimatedSize = tx.bitcoinSerialize().length + (114 * tx.getInputs().size());
 
 		priority /= estimatedSize;
@@ -452,12 +489,11 @@ public class MyRemoteWallet extends MyWallet {
 		for (Map<String, Object> map : this.getKeysMap()) {
 			String addr = (String) map.get("addr");
 
-			//Don't include watch only addresses
-			if (map.get("priv") == null)
-				continue;
-
 			buffer.append("&addr[]="+addr);
 		}
+
+
+		System.out.println(buffer);
 
 		List<MyTransactionOutPoint> outputs = new ArrayList<MyTransactionOutPoint>();
 
@@ -511,14 +547,14 @@ public class MyRemoteWallet extends MyWallet {
 		String urlEncodedPayload = URLEncoder.encode(payload);
 
 		postURL(WebROOT + "wallet", "guid="+URLEncoder.encode(this.getGUID(), "utf-8")+"&sharedKey="+URLEncoder.encode(this.getSharedKey(), "utf-8")+"&payload="+urlEncodedPayload+"&method="+method+"&length="+(payload.length())+"&checksum="+URLEncoder.encode(_checksum, "utf-8")+"&kaptcha="+kaptcha);
-		
+
 		_isNew = false;
-		
+
 		return true;
 	}
-	
+
 	public void remoteDownload() {
-		
+
 	}
 
 	public String getChecksum() {
@@ -538,7 +574,7 @@ public class MyRemoteWallet extends MyWallet {
 		addKeysTobitoinJWallet(_wallet);
 
 		_isNew = false;
-		
+
 		return payload;
 	}
 

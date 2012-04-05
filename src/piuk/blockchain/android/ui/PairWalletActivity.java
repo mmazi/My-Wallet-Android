@@ -85,7 +85,7 @@ public class PairWalletActivity extends AbstractWalletActivity {
 					return;
 				}
 
-				if (password == null || password.length() <= 10) {
+				if (password == null || password.length() < 10) {
 					errorDialog(R.string.error_pairing_wallet, "Password must be greater than 10 characters in length");
 					return;
 				}

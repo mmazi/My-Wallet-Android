@@ -22,6 +22,8 @@
 
 	<string name="wallet_options_bug">Bug Report</string>
 
+	<string name="wrong_private_key">Private Key does not match bitcoin address. You scanned %s</string>
+
 	<string name="second_password_text">This action requires a second password in order to
 		fully decrypt your bitcoin wallet. Please enter your second password
 		below.</string>
@@ -41,6 +43,8 @@
 	</string>
 
 	<string name="ask_for_fee">This transaction is low priority it is recommended you include a 0.005 BTC miners fee. Would you like to add this fee now?</string>
+	<string name="ask_for_private_key">This transaction requires the private key for Bitcoin address %s. Would you like to scan it from a paper wallet?</string>
+	
 	<string name="error_setting_label">Error setting address label</string>
 
 	<string name="new_account_title">New account</string>

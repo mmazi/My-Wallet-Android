@@ -63,10 +63,11 @@ public class ExchangeRatesProvider extends ContentProvider
 		if (exchangeRates == null)
 		{
 			exchangeRates = getExchangeRates();
+			
 			if (exchangeRates == null)
 				return null;
 		}
-
+	
 		final MatrixCursor cursor = new MatrixCursor(new String[] { BaseColumns._ID, KEY_CURRENCY_CODE, KEY_EXCHANGE_RATE });
 
 		if (selection == null)
@@ -76,6 +77,10 @@ public class ExchangeRatesProvider extends ContentProvider
 		}
 		else if (selection.equals(KEY_CURRENCY_CODE))
 		{
+
+			if (selectionArgs == null)
+				return null;
+
 			final String code = selectionArgs[0];
 			final Double rate = exchangeRates.get(code);
 			cursor.newRow().add(code.hashCode()).add(code).add(rate);

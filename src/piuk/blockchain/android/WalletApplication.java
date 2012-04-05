@@ -71,7 +71,7 @@ public class WalletApplication extends Application
 	{
 		public void onServiceConnected(final ComponentName name, final IBinder binder) {
 			service = ((BlockchainService.LocalBinder) binder).getService();
-		}
+		} 
 
 		public void onServiceDisconnected(final ComponentName name) { }
 	};

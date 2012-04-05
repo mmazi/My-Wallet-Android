@@ -145,11 +145,10 @@ public final class NewAccountFragment extends DialogFragment
 			{
 				final WalletApplication application = (WalletApplication) getActivity().getApplication();
 
-				if (password.getText().length() == 0 || password.getText().length() > 255) {
+				if (password.getText().length() < 10 || password.getText().length() > 255) {
 					Toast.makeText(application, R.string.new_account_password_length_error, Toast.LENGTH_LONG).show();
 					return;
 				}
-
 
 				if (!password.getText().toString().equals(password2.getText().toString())) {
 					Toast.makeText(application, R.string.new_account_password_mismatch_error, Toast.LENGTH_LONG).show();

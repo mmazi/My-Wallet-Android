@@ -18,6 +18,8 @@
 package piuk.blockchain.android.ui;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -79,7 +81,7 @@ public final class SendCoinsFragment extends Fragment
 	private CurrencyAmountView amountView;
 	private Button viewGo;
 	private Button viewCancel;
-
+	
 	private State state = State.INPUT;
 
 	private enum State
@@ -89,8 +91,7 @@ public final class SendCoinsFragment extends Fragment
 
 	private final TextWatcher textWatcher = new TextWatcher()
 	{
-		public void afterTextChanged(final Editable s)
-		{
+		public void afterTextChanged(final Editable s) {
 			updateView();
 		}
 
@@ -132,14 +133,14 @@ public final class SendCoinsFragment extends Fragment
 	@Override
 	public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState)
 	{
-		final AbstractWalletActivity activity = (AbstractWalletActivity) getActivity();
+		final SendCoinsActivity activity = (SendCoinsActivity) getActivity();
 
 		final View view = inflater.inflate(R.layout.send_coins_fragment, container);
 
 		final BigInteger estimated = application.getWallet().getBalance(BalanceType.ESTIMATED);
 		final BigInteger available = application.getWallet().getBalance(BalanceType.AVAILABLE);
 		final BigInteger pending = estimated.subtract(available);
-	
+		final Map<String, String> extraPrivateKeysMap = new HashMap<String, String>();
 		
 		Button instantDepositButton = (Button) view.findViewById(R.id.instant_deposit);
 		
@@ -200,15 +201,19 @@ public final class SendCoinsFragment extends Fragment
 		viewGo.setOnClickListener(new OnClickListener()
 		{			
 			final SendProgress progress = new SendProgress() {
-				public void onSend(Transaction tx, final String message) {						
+				public void onSend(final Transaction tx, final String message) {						
 					handler.post(new Runnable() {
 						public void run() {
 							state = State.SENT;
 
 							activity.longToast(message);
-
-							activity.setResult(Activity.RESULT_OK);
-
+						
+							Intent intent = activity.getIntent();
+							intent.putExtra("tx", tx.getHash());
+							activity.setResult(Activity.RESULT_OK, intent);
+							
+							activity.finish();
+						
 							updateView();
 						}
 					});
@@ -285,6 +290,51 @@ public final class SendCoinsFragment extends Fragment
 					}
 
 					return true;
+				}
+
+				
+				public ECKey onPrivateKeyMissing(final String address) {
+					
+					System.out.println("onPrivateKeyMissing()");
+					
+					handler.post(new Runnable() {
+						public void run() {
+							AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+							builder.setMessage(getString(R.string.ask_for_private_key, address))
+							.setCancelable(false)
+							.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int id) {		
+									activity.scanPrivateKeyAddress = address;
+									
+									activity.showQRReader();
+								}
+							})
+							.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int id) {
+									
+									synchronized (activity.temporaryPrivateKeys) {
+										activity.temporaryPrivateKeys.notify();
+									}
+									
+									dialog.cancel();
+								}
+							});
+							
+							AlertDialog alert = builder.create();
+							
+							alert.show();
+						}
+					});
+					
+					try {
+						synchronized (activity.temporaryPrivateKeys) {
+							activity.temporaryPrivateKeys.wait();
+						}
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					
+					return activity.temporaryPrivateKeys.get(address);
 				}
 			};
 

@@ -18,6 +18,10 @@
 package piuk.blockchain.android.ui;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang.ArrayUtils;
 
 import android.app.Dialog;
 import android.content.Intent;
@@ -30,9 +34,13 @@ import android.view.Window;
 import android.webkit.WebView;
 
 import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.Base58;
+import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.uri.BitcoinURI;
 import com.google.bitcoin.uri.BitcoinURIParseException;
 
+import piuk.MyECKey;
+import piuk.MyWallet;
 import piuk.blockchain.R;
 import piuk.blockchain.android.Constants;
 import piuk.blockchain.android.util.ActionBarFragment;
@@ -44,22 +52,22 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 {
 	public static final String INTENT_EXTRA_ADDRESS = "address";
 	private static final String INTENT_EXTRA_QUERY = "query";
-
 	private static final int DIALOG_HELP = 0;
-
+	final Map<String, ECKey> temporaryPrivateKeys = new HashMap<String, ECKey>();
 	private static final int REQUEST_CODE_SCAN = 0;
+	public String scanPrivateKeyAddress = null;
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
+
 		getWalletApplication().connect();
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		
+
 		getWalletApplication().diconnectSoon();
 	}
 
@@ -140,22 +148,58 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 			final String contents = intent.getStringExtra("SCAN_RESULT");
 			if (contents.matches("[a-zA-Z0-9]*"))
 			{
-				updateSendCoinsFragment(contents, null);
+				System.out.println("Scan address " + scanPrivateKeyAddress);
+
+				if (scanPrivateKeyAddress != null) {
+
+					try {
+						
+						byte[] privBytes = Base58.decode(contents);
+												
+						//Prppend a zero byte to make the biginteger unsigned
+						byte[] appendZeroByte = ArrayUtils.addAll(new byte[1], privBytes);
+
+						ECKey ecKey = new ECKey(new BigInteger(appendZeroByte));
+						
+						if (ecKey.toAddress(Constants.NETWORK_PARAMETERS).toString().equals(scanPrivateKeyAddress)) {
+							temporaryPrivateKeys.put(scanPrivateKeyAddress, ecKey);
+						} else {							
+							longToast(getString(R.string.wrong_private_key, ecKey.toAddress(Constants.NETWORK_PARAMETERS).toString()));
+						}
+						
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+
+				} else {
+					updateSendCoinsFragment(contents, null);					
+				}
 			}
 			else
 			{
-				try
-				{
-					final BitcoinURI bitcoinUri = new BitcoinURI(Constants.NETWORK_PARAMETERS, contents);
-					final Address address = bitcoinUri.getAddress();
-					updateSendCoinsFragment(address != null ? address.toString() : null, bitcoinUri.getAmount());
+					try
+					{
+
+						final BitcoinURI bitcoinUri = new BitcoinURI(Constants.NETWORK_PARAMETERS, contents);
+						final Address address = bitcoinUri.getAddress();
+
+
+						updateSendCoinsFragment(address != null ? address.toString() : null, bitcoinUri.getAmount());
+
+					}
+					catch (final BitcoinURIParseException x)
+					{
+						errorDialog(R.string.send_coins_uri_parse_error_title, contents);
+					} 
 				}
-				catch (final BitcoinURIParseException x)
-				{
-					errorDialog(R.string.send_coins_uri_parse_error_title, contents);
-				} 
-			}
 		}
+		
+
+		synchronized (temporaryPrivateKeys) {
+			temporaryPrivateKeys.notify();
+		}
+		
+		scanPrivateKeyAddress = null;
 	}
 
 	private void handleIntent(final Intent intent)

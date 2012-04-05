@@ -40,21 +40,25 @@ import piuk.blockchain.android.WalletApplication;
 public final class WelcomeFragment extends DialogFragment
 {
 	private static final String FRAGMENT_TAG = WelcomeFragment.class.getName();
-	
+
 	public static DialogFragment show(final FragmentManager fm)
 	{	
+		try {
+			FragmentTransaction ft = fm.beginTransaction();
 
-		FragmentTransaction ft = fm.beginTransaction();
+			final DialogFragment newFragment = instance();
 
-		ft.addToBackStack(null);
-		
-		final DialogFragment newFragment = instance();
+			newFragment.show(ft, FRAGMENT_TAG);
 
-		newFragment.show(ft, FRAGMENT_TAG);
-		
-		return newFragment;
-	}
+			return newFragment;
 	
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+
 	private static WelcomeFragment instance()
 	{
 		final WelcomeFragment fragment = new WelcomeFragment();
@@ -93,11 +97,15 @@ public final class WelcomeFragment extends DialogFragment
 
 		pairDeviceButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {	
-				dismiss();
+				try {
+					dismiss();
 
-				System.out.println("Start activity");
-				
-				startActivity(new Intent(getActivity(), PairWalletActivity.class));
+					System.out.println("Start activity");
+
+					startActivity(new Intent(getActivity(), PairWalletActivity.class));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		});
 

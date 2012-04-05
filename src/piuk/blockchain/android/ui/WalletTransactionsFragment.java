@@ -280,61 +280,28 @@ public final class WalletTransactionsFragment extends Fragment
 						final BigInteger value = tx.getValue(application.getWallet());
 						final boolean sent = value.signum() < 0;
 
-						final CircularProgressView rowConfidenceCircular = (CircularProgressView) row
-								.findViewById(R.id.transaction_row_confidence_circular);
-						final TextView rowConfidenceTextual = (TextView) row.findViewById(R.id.transaction_row_confidence_textual);
 
 						final int textColor;
 						if (confidenceType == ConfidenceType.NOT_SEEN_IN_CHAIN)
 						{
-							rowConfidenceCircular.setVisibility(View.VISIBLE);
-							rowConfidenceTextual.setVisibility(View.GONE);
 							textColor = colorInsignificant;
-
-							rowConfidenceCircular.setProgress(0);
 						}
 						else if (confidenceType == ConfidenceType.BUILDING)
 						{
-							rowConfidenceCircular.setVisibility(View.VISIBLE);
-							rowConfidenceTextual.setVisibility(View.GONE);
+						
 							textColor = colorSignificant;
-
-							if (bestChainHeight > 0)
-							{
-								final int depth = bestChainHeight - confidence.getAppearedAtChainHeight() + 1;
-								rowConfidenceCircular.setProgress(depth > 0 ? depth : 0);
-							}
-							else
-							{
-								rowConfidenceCircular.setProgress(0);
-							}
 						}
 						else if (confidenceType == ConfidenceType.NOT_IN_BEST_CHAIN)
 						{
-							rowConfidenceCircular.setVisibility(View.GONE);
-							rowConfidenceTextual.setVisibility(View.VISIBLE);
 							textColor = colorSignificant;
-
-							rowConfidenceTextual.setText("!");
-							rowConfidenceTextual.setTextColor(Color.RED);
 						}
 						else if (confidenceType == ConfidenceType.OVERRIDDEN_BY_DOUBLE_SPEND)
 						{
-							rowConfidenceCircular.setVisibility(View.GONE);
-							rowConfidenceTextual.setVisibility(View.VISIBLE);
 							textColor = Color.RED;
-
-							rowConfidenceTextual.setText("\u271D"); // latin cross
-							rowConfidenceTextual.setTextColor(Color.RED);
 						}
 						else
 						{
-							rowConfidenceCircular.setVisibility(View.GONE);
-							rowConfidenceTextual.setVisibility(View.VISIBLE);
 							textColor = colorInsignificant;
-
-							rowConfidenceTextual.setText("?");
-							rowConfidenceTextual.setTextColor(colorInsignificant);
 						}
 
 						final String address;
@@ -356,14 +323,6 @@ public final class WalletTransactionsFragment extends Fragment
 						rowTime.setText(time != null ? (DateUtils.isToday(time.getTime()) ? timeFormat.format(time) : dateFormat.format(time)) : null);
 						rowTime.setTextColor(textColor);
 
-						final TextView rowTo = (TextView) row.findViewById(R.id.transaction_row_to);
-						rowTo.setVisibility(sent ? View.VISIBLE : View.INVISIBLE);
-						rowTo.setTextColor(textColor);
-
-						final TextView rowFrom = (TextView) row.findViewById(R.id.transaction_row_from);
-						rowFrom.setVisibility(sent ? View.INVISIBLE : View.VISIBLE);
-						rowFrom.setTextColor(textColor);
-
 						final TextView rowLabel = (TextView) row.findViewById(R.id.transaction_row_address);
 						rowLabel.setTextColor(textColor);
 						rowLabel.setText(label != null ? label : address);
@@ -373,7 +332,7 @@ public final class WalletTransactionsFragment extends Fragment
 						rowValue.setCurrencyCode(null);
 						rowValue.setAmountSigned(true);
 						rowValue.setTextColor(textColor);
-						rowValue.setAmount(value);
+						rowValue.setAmount(value); 
 
 
 						if (sent) {

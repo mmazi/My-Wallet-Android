@@ -31,6 +31,7 @@ import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletEventListener;
 
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ComponentName;
@@ -159,7 +160,7 @@ public final class WalletActivity extends AbstractWalletActivity
 		actionBar.addButton(R.drawable.ic_action_receive).setOnClickListener(new OnClickListener()
 		{
 			public void onClick(final View v)
-			{
+			{				
 				startActivity(new Intent(WalletActivity.this, RequestCoinsActivity.class));
 			}
 		});

@@ -2,7 +2,7 @@
 
 <resources>
 
-	<string name="app_name">Bitcoin Wallet</string>
+	
 	<string name="toast_wallet_reset">Plånboken nollställdes,\ndet kan ta ett tag innan den återställts</string>
 
 	<string name="blockchain_state_disclaimer">Använd på egen risk. Läs säkerhetsbeskrivningen.</string>
