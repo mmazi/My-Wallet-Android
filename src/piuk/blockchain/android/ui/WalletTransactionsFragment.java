@@ -19,6 +19,7 @@ package piuk.blockchain.android.ui;
 
 import java.math.BigInteger;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -256,8 +257,8 @@ public final class WalletTransactionsFragment extends Fragment
 
 			this.mode = getArguments().getInt(KEY_MODE);
 
-			adapter = new ArrayAdapter<Transaction>(activity, 0)
-					{
+			adapter = new ArrayAdapter<Transaction>(activity, 0){
+			
 				final DateFormat dateFormat = android.text.format.DateFormat.getDateFormat(activity);
 				final DateFormat timeFormat = android.text.format.DateFormat.getTimeFormat(activity);
 				final int colorSignificant = getResources().getColor(R.color.significant);

@@ -25,11 +25,14 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONValue;
 
 import piuk.MyBlockChain.MyBlock;
@@ -47,7 +50,6 @@ import com.google.bitcoin.core.TransactionOutput;
 import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.core.WalletTransaction;
 import com.google.bitcoin.core.Transaction.SigHash;
-import com.google.bitcoin.core.Wallet.BalanceType;
 
 
 @SuppressWarnings("unchecked")
@@ -255,19 +257,30 @@ public class MyRemoteWallet extends MyWallet {
 
 		List<Map<String, Object>> transactions = (List<Map<String, Object>>) top.get("txs");
 
+		WalletTransaction newestTransaction = null;
 		if (transactions != null) {
 			for (Map<String, Object> transactionDict : transactions) {
-				_wallet.addWalletTransaction(MyTransaction.fromJSONDict(transactionDict));
+				WalletTransaction tx = MyTransaction.fromJSONDict(transactionDict);
+				
+				if (tx == null)
+					continue;
+				
+				if (newestTransaction == null)
+					newestTransaction = tx;
+				
+				_wallet.addWalletTransaction(tx);
 			}
 		}
 
 		BigInteger newBalance = _wallet.final_balance;
 
 		if (_wallet.getTransactionsByTime() != null && _wallet.getTransactionsByTime().size() > 0) {
-			if (newBalance.compareTo(previousBalance) > 0)
-				_wallet.invokeOnCoinsReceived(_wallet.getTransactionsByTime().get(0), previousBalance, newBalance);
-			else if (newBalance.compareTo(previousBalance) < 0)
-				_wallet.invokeOnCoinsSent(_wallet.getTransactionsByTime().get(0), previousBalance, newBalance);
+			if (newBalance.compareTo(previousBalance) != 0) {
+				if (newestTransaction.getTransaction().getValue(getBitcoinJWallet()).compareTo(BigInteger.ZERO) > 0)
+					_wallet.invokeOnCoinsReceived(newestTransaction.getTransaction(), previousBalance, newBalance);
+				else
+					_wallet.invokeOnCoinsSent(newestTransaction.getTransaction(), previousBalance, newBalance);
+			}
 		}
 	}
 
@@ -282,15 +295,9 @@ public class MyRemoteWallet extends MyWallet {
 	}
 
 	public synchronized String doMultiAddr() throws Exception {
-		StringBuffer buffer =  new StringBuffer(WebROOT + "multiaddr?");
-
-		for (Map<String, Object> map : this.getKeysMap()) {
-			String addr = (String) map.get("addr");
-
-			buffer.append("&addr[]="+addr);
-		}
-
-		String response = fetchURL(buffer.toString());
+		String url =  WebROOT + "multiaddr?active=" + StringUtils.join(getActiveAddresses(), "|")+ "&archived=" + StringUtils.join(getArchivedAddresses(), "|");
+		
+		String response = fetchURL(url);
 
 		parseMultiAddr(response);
 
@@ -328,17 +335,25 @@ public class MyRemoteWallet extends MyWallet {
 
 					List<MyTransactionOutPoint> unspent = getUnspentOutputPoints();
 					List<MyTransactionOutPoint> toRemove = new ArrayList<MyTransactionOutPoint>();
-					
-					for (MyTransactionOutPoint output : unspent) {						
+					Set<String> alreadyAskedFor = new HashSet<String>();
+
+					for (MyTransactionOutPoint output : unspent) {	
+
 						BitcoinScript script = new BitcoinScript(output.getScriptBytes());
 
-						Map<String, Object> keyMap = findKey(script.getAddress().toString());
+						String addr = script.getAddress().toString();
+
+						Map<String, Object> keyMap = findKey(addr);
 
 						if (keyMap.get("priv") == null) {
-							ECKey key = progress.onPrivateKeyMissing(script.getAddress().toString());
-							
-							if (key != null) {
-								tempKeys.add(key);
+							if (alreadyAskedFor.add(addr)) {
+								ECKey key = progress.onPrivateKeyMissing(addr);
+
+								if (key != null) {
+									tempKeys.add(key);
+								} else {
+									toRemove.add(output);
+								}
 							} else {
 								toRemove.add(output);
 							}
@@ -347,7 +362,7 @@ public class MyRemoteWallet extends MyWallet {
 
 					//Remove those outputs which we could not find a private key for
 					unspent.removeAll(toRemove);
-					
+
 					//Add the temporary private keys (From paper wallet)
 					getBitcoinJWallet().keychain.addAll(tempKeys);
 
@@ -377,7 +392,7 @@ public class MyRemoteWallet extends MyWallet {
 					String response = pushTx(tx);
 
 					progress.onSend(tx, response);
-
+ 
 				} catch (Exception e) {
 					e.printStackTrace();
 
@@ -489,11 +504,10 @@ public class MyRemoteWallet extends MyWallet {
 		for (Map<String, Object> map : this.getKeysMap()) {
 			String addr = (String) map.get("addr");
 
-			buffer.append("&addr[]="+addr);
+			//Only include active addresses
+			if (map.get("tag") == null || (Long)map.get("tag") == 0)
+				buffer.append("&addr[]="+addr);
 		}
-
-
-		System.out.println(buffer);
 
 		List<MyTransactionOutPoint> outputs = new ArrayList<MyTransactionOutPoint>();
 

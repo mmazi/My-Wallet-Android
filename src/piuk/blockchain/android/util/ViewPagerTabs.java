@@ -45,7 +45,6 @@ public class ViewPagerTabs extends View implements OnPageChangeListener
 	public ViewPagerTabs(final Context context, final AttributeSet attrs)
 	{
 		super(context, attrs);
-
 		paint.setTextSize(getResources().getDimension(R.dimen.font_size_tiny));
 		paint.setColor(Color.BLACK);
 		paint.setAntiAlias(true);

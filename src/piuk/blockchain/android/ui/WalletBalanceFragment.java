@@ -69,17 +69,21 @@ public final class WalletBalanceFragment extends Fragment implements LoaderManag
 		@Override
 		public void onChange(Wallet wallet)
 		{
-			getActivity().runOnUiThread(new Runnable()
-			{
-				public void run()
+			try {
+				getActivity().runOnUiThread(new Runnable()
 				{
-					try {
-						updateView();
-					} catch (Exception e) {
-						e.printStackTrace();
+					public void run()
+					{
+						try {
+							updateView();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 					}
-				}
-			});
+				});
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	};
 
@@ -112,13 +116,12 @@ public final class WalletBalanceFragment extends Fragment implements LoaderManag
 
 		if ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) < Configuration.SCREENLAYOUT_SIZE_LARGE)
 		{
-			view.setOnClickListener(new OnClickListener()
+			view.setOnClickListener(new OnClickListener() 
 			{
 				public void onClick(final View v)
-				{
+				{ 
 					final FragmentManager fm = getFragmentManager();
 					final FragmentTransaction ft = fm.beginTransaction();
-					ft.hide(fm.findFragmentById(R.id.wallet_address_fragment));
 					ft.hide(fm.findFragmentById(R.id.wallet_transactions_fragment));
 					ft.show(fm.findFragmentById(R.id.exchange_rates_fragment));
 					ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);

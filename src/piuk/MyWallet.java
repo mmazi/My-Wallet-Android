@@ -90,6 +90,23 @@ public class MyWallet {
 		return (List<Map<String, Object>>) root.get("keys");
 	}
 
+	public String[] getActiveAddresses() {
+		List<String> list = new ArrayList<String>();
+		for (Map<String, Object> map : getKeysMap()) {
+			if (map.get("tag") == null || (Long)map.get("tag") == 0)
+				list.add((String) map.get("addr"));
+		} 
+		return list.toArray(new String[list.size()]);
+	}
+	
+	public String[] getArchivedAddresses() {
+		List<String> list = new ArrayList<String>();
+		for (Map<String, Object> map : getKeysMap()) {
+			if (map.get("tag") != null && (Long)map.get("tag") == 2)
+				list.add((String) map.get("addr"));
+		}
+		return list.toArray(new String[list.size()]);
+	}
 
 	@SuppressWarnings("unchecked")
 	public List<Map<String, Object>> getAddressBookMap() {
@@ -208,6 +225,12 @@ public class MyWallet {
 		return false;
 	}
 
+	public void setTag(String address, long tag) {
+		if (this.isMine(address)) {
+			findKey(address).put("tag", tag);
+		}
+	}
+	
 	public void addLabel(String address, String label) {
 		if (this.isMine(address)) {
 			findKey(address).put("label", label);

@@ -43,6 +43,8 @@ public class Constants
 	
 	static final String EXCEPTION_LOG = "exception.log";
 
+	static final boolean isAmazon = true;
+
 	public final static long MultiAddrTimeThreshold =  60000; //1 minute
 	
 	private static final String WALLET_KEY_BACKUP_BASE58_PROD = "key-backup-base58";
@@ -110,7 +112,7 @@ public class Constants
 	public static final String AUTHOR_TWITTER_URL = "http://twitter.com/android_bitcoin";
 	public static final String AUTHOR_GOOGLEPLUS_URL = "https://profiles.google.com/andreas.schildbach";
 	public static final String MARKET_APP_URL = "market://details?id=%s";
-	public static final String WEBMARKET_APP_URL = "https://play.google.com/store/apps/details?id=%s";
+	public static final String WEBMARKET_APP_URL = isAmazon ? "http://www.amazon.com/gp/mas/dl/android?p=%s" : "https://play.google.com/store/apps/details?id=%s";
 
 	private static final String VERSION_URL_PROD = "http://wallet.schildbach.de/version";
 	private static final String VERSION_URL_TEST = VERSION_URL_PROD + '_' + "test"; // replace protected

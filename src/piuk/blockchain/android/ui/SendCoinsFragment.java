@@ -18,23 +18,16 @@
 package piuk.blockchain.android.ui;
 
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
-
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -60,9 +53,9 @@ import piuk.MyRemoteWallet;
 import piuk.MyRemoteWallet.SendProgress;
 import piuk.blockchain.R;
 import piuk.blockchain.android.AddressBookProvider;
-import piuk.blockchain.android.BlockchainService;
 import piuk.blockchain.android.Constants;
 import piuk.blockchain.android.WalletApplication;
+import piuk.blockchain.android.WalletApplication.AddAddressCallback;
 import piuk.blockchain.android.ui.CurrencyAmountView.Listener;
 import piuk.blockchain.android.ui.SecondPasswordFragment.SuccessCallback;
 import piuk.blockchain.android.util.WalletUtils;
@@ -140,7 +133,6 @@ public final class SendCoinsFragment extends Fragment
 		final BigInteger estimated = application.getWallet().getBalance(BalanceType.ESTIMATED);
 		final BigInteger available = application.getWallet().getBalance(BalanceType.AVAILABLE);
 		final BigInteger pending = estimated.subtract(available);
-		final Map<String, String> extraPrivateKeysMap = new HashMap<String, String>();
 		
 		Button instantDepositButton = (Button) view.findViewById(R.id.instant_deposit);
 		
@@ -159,8 +151,6 @@ public final class SendCoinsFragment extends Fragment
 				startActivity(browserIntent);
 			}
 		});
-		
-		// TODO subscribe to wallet changes
 
 		receivingAddressView = (AutoCompleteTextView) view.findViewById(R.id.send_coins_receiving_address);
 		receivingAddressView.setAdapter(new AutoCompleteAdapter(activity, null));
@@ -241,7 +231,7 @@ public final class SendCoinsFragment extends Fragment
 							updateView();
 						}
 					});							
-				}
+				} 
 
 				public void onProgress(final String message) {
 					handler.post(new Runnable() {
@@ -249,7 +239,7 @@ public final class SendCoinsFragment extends Fragment
 							state = State.SENDING;
 							
 							updateView();
-						}
+						} 
 					});
 				}
 
@@ -263,8 +253,8 @@ public final class SendCoinsFragment extends Fragment
 								builder.setMessage(R.string.ask_for_fee)
 								.setCancelable(false)
 								.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-									public void onClick(DialogInterface dialog, int id) {												
-										send(BigInteger.valueOf(500000)); //0.005 BTC fee
+									public void onClick(DialogInterface dialog, int id) {																						
+										makeTransaction(true);
 									}
 								})
 								.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -275,7 +265,7 @@ public final class SendCoinsFragment extends Fragment
 								
 								AlertDialog alert = builder.create();
 								
-								alert.show();
+								alert.show(); 
 							}
 						});
 						
@@ -338,28 +328,42 @@ public final class SendCoinsFragment extends Fragment
 				}
 			};
 
-			public void send(BigInteger fee) {
-				Address receivingAddress;
-				
-				try {
-					receivingAddress = new Address(Constants.NETWORK_PARAMETERS, receivingAddressView.getText().toString().trim());
-				} catch (AddressFormatException e) {
-					e.printStackTrace();
-					
-					return;
-				}
-				
+			public void send(Address receivingAddress, BigInteger fee) {
 				final BigInteger amount = amountView.getAmount();
 				final WalletApplication application = (WalletApplication) getActivity().getApplication();
 				
 				application.getRemoteWallet().sendCoinsAsync(receivingAddress.toString(), amount, fee, progress);
 			}
 			
-			public void makeTransaction() {
+			public void makeTransaction(boolean forceFee) {
 				try {
-					final BigInteger fee = BigInteger.ZERO;
+					final BigInteger fee = forceFee ? BigInteger.valueOf(500000) : BigInteger.ZERO;
 
-					send(fee);
+					String addressString = receivingAddressView.getText().toString().trim();
+					
+					try {
+						Address receivingAddress = new Address(Constants.NETWORK_PARAMETERS, addressString);
+						
+						send(receivingAddress, fee);
+					} catch (AddressFormatException e) {
+
+						if (isValidEmail(addressString)) {
+							
+							//Generate a new Archived Address
+							application.addKeyToWallet(new ECKey(), "Sent To " + addressString, 2, new AddAddressCallback() {
+								public void onSavedAddress(String address) {
+									try {
+										send(new Address(Constants.NETWORK_PARAMETERS, address), fee);
+									} catch (AddressFormatException e) {
+										e.printStackTrace();
+									} 
+								}
+								public void onError() {
+									System.out.println("Generate Address Failed");
+								}	
+							});
+						}
+					}
 					
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -372,13 +376,13 @@ public final class SendCoinsFragment extends Fragment
 				MyRemoteWallet remoteWallet = application.getRemoteWallet();
 
 				if (remoteWallet.isDoubleEncrypted() == false) {
-					makeTransaction();
+					makeTransaction(false);
 				} else {
 					if (remoteWallet.temporySecondPassword == null) {
 						SecondPasswordFragment.show(getFragmentManager(), new SuccessCallback() {
 
 							public void onSuccess() {
-								makeTransaction();
+								makeTransaction(false);
 							}
 
 							public void onFail() {
@@ -386,7 +390,7 @@ public final class SendCoinsFragment extends Fragment
 							} 
 						});
 					} else {
-						makeTransaction();
+						makeTransaction(false);
 					}
 				}
 			}
@@ -471,18 +475,29 @@ public final class SendCoinsFragment extends Fragment
 		}
 	}
 
+	private boolean isValidEmail(String email) {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+	}
+	
 	private void updateView()
 	{
-		boolean validAddress = false;
+		//0 = invalid, 1 = bitcoin, 2 = email
+		int AddressType = 0;
 		try
 		{
 			final String address = receivingAddressView.getText().toString().trim();
-			if (address.length() > 0)
-			{
-				new Address(Constants.NETWORK_PARAMETERS, address);
-				validAddress = true;
+			if (address.length() > 0) {
+				//try {
+					new Address(Constants.NETWORK_PARAMETERS, address);
+					AddressType = 1;
+					receivingAddressErrorView.setVisibility(View.GONE);
+				//} catch (AddressFormatException e) {
+					//if (isValidEmail(address)) {
+					//	AddressType = 2;
+					//	receivingAddressErrorView.setVisibility(View.GONE);
+					//}
+				//}
 			}
-			receivingAddressErrorView.setVisibility(View.GONE);
 		}
 		catch (final Exception x)
 		{
@@ -492,12 +507,11 @@ public final class SendCoinsFragment extends Fragment
 		final BigInteger amount = amountView.getAmount();
 		final boolean validAmount = amount != null && amount.signum() > 0;
 
-
 		receivingAddressView.setEnabled(state == State.INPUT);
 
 		amountView.setEnabled(state == State.INPUT);
 
-		viewGo.setEnabled(state == State.INPUT && validAddress && validAmount);
+		viewGo.setEnabled(state == State.INPUT && AddressType != 0 && validAmount);
 		if (state == State.INPUT)
 			viewGo.setText(R.string.send_coins_fragment_button_send);
 		else if (state == State.SENDING)

@@ -30,6 +30,8 @@ import java.util.TimerTask;
 
 import org.apache.commons.io.IOUtils;
 
+import piuk.BitcoinAddress;
+import piuk.Hash;
 import piuk.MyRemoteWallet;
 import piuk.blockchain.R;
 import piuk.blockchain.android.util.ErrorReporter;
@@ -424,11 +426,22 @@ public class WalletApplication extends Application
 		}).start();
 	}
 
-	public void addNewKeyToWallet()
+	public static interface AddAddressCallback {
+		public void onSavedAddress(String address);
+		public void onError();
+	}
+	
+	public void addKeyToWallet(ECKey key, String label, int tag, final AddAddressCallback callback)
 	{
 		try {
-			remoteWallet.addKey(new ECKey(), null);
-
+			remoteWallet.addKey(key, label);
+			
+			final String address = new BitcoinAddress(new Hash(key.getPubKeyHash()), (short) 0).toString();
+			
+			if (tag != 0) {
+				remoteWallet.setTag(address, tag);
+			}
+		
 			new Thread(){
 				@Override
 				public void run() {
@@ -439,6 +452,8 @@ public class WalletApplication extends Application
 						{
 							public void run()
 							{
+								callback.onSavedAddress(address);
+								
 								notifyWidgets();
 							}
 						});
@@ -452,6 +467,8 @@ public class WalletApplication extends Application
 						{
 							public void run()
 							{
+								callback.onError();
+								
 								Toast.makeText(WalletApplication.this, R.string.toast_error_syncing_wallet, Toast.LENGTH_LONG).show();
 							}
 						});

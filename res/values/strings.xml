@@ -120,7 +120,7 @@
 	<string name="send_coins_parse_address_error_msg">Got invalid bitcoin address!\n(Mixing up
 		Testnet/Prodnet?)</string>
 	<string name="send_coins_fragment_receiving_address_label">Pay to</string>
-	<string name="send_coins_fragment_receiving_address_hint">type address or name</string>
+	<string name="send_coins_fragment_receiving_address_hint">bitcoin address </string>
 	<string name="send_coins_fragment_receiving_address_error">Invalid Bitcoin Address!</string>
 	<string name="send_coins_fragment_available_label">Available for spending</string>
 	<string name="send_coins_fragment_pending">(BTC %s waiting for confirmation)</string>
@@ -234,7 +234,7 @@
 	<string name="notification_peers_connected_msg">%d peers connected</string>
 
 	<!-- generic buttons -->
-	<string name="button_dismiss">Dismiss</string>
+	<string name="button_dismiss">Dismiss</string> 
 	<string name="button_cancel">Cancel</string>
 
 </resources>

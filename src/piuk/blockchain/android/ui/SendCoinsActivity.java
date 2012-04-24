@@ -36,11 +36,12 @@ import android.webkit.WebView;
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.Base58;
 import com.google.bitcoin.core.ECKey;
-import com.google.bitcoin.uri.BitcoinURI;
+
+import piuk.BitcoinAddress;
+import piuk.BitcoinURI;
+
 import com.google.bitcoin.uri.BitcoinURIParseException;
 
-import piuk.MyECKey;
-import piuk.MyWallet;
 import piuk.blockchain.R;
 import piuk.blockchain.android.Constants;
 import piuk.blockchain.android.util.ActionBarFragment;
@@ -180,9 +181,8 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 					try
 					{
 
-						final BitcoinURI bitcoinUri = new BitcoinURI(Constants.NETWORK_PARAMETERS, contents);
-						final Address address = bitcoinUri.getAddress();
-
+						final BitcoinURI bitcoinUri = new BitcoinURI(contents);
+						final BitcoinAddress address = bitcoinUri.getAddress();
 
 						updateSendCoinsFragment(address != null ? address.toString() : null, bitcoinUri.getAmount());
 
@@ -215,7 +215,7 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 		{
 			try
 			{
-				final BitcoinURI bitcoinUri = new BitcoinURI(Constants.NETWORK_PARAMETERS, intentUri.toString());
+				final BitcoinURI bitcoinUri = new BitcoinURI(intentUri.toString());
 				address = bitcoinUri.getAddress().toString();
 				amount = bitcoinUri.getAmount();
 			}
@@ -229,7 +229,7 @@ public final class SendCoinsActivity extends AbstractWalletActivity
 		{
 			try
 			{
-				final BitcoinURI bitcoinUri = new BitcoinURI(Constants.NETWORK_PARAMETERS, intent.getStringExtra(INTENT_EXTRA_QUERY));
+				final BitcoinURI bitcoinUri = new BitcoinURI(intent.getStringExtra(INTENT_EXTRA_QUERY));
 				address = bitcoinUri.getAddress().toString();
 				amount = bitcoinUri.getAmount();
 			}
