@@ -119,7 +119,7 @@ public final class WalletBalanceFragment extends Fragment implements LoaderManag
 			view.setOnClickListener(new OnClickListener() 
 			{
 				public void onClick(final View v)
-				{ 
+				{
 					final FragmentManager fm = getFragmentManager();
 					final FragmentTransaction ft = fm.beginTransaction();
 					ft.hide(fm.findFragmentById(R.id.wallet_transactions_fragment));

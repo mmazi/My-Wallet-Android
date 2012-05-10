@@ -107,7 +107,7 @@ public final class RequestCoinsFragment extends Fragment
 				});
 				newFragment.show(ft, AmountCalculatorFragment.FRAGMENT_TAG);
 			}
-		});
+		}); 
 
 		nfcEnabledView = view.findViewById(R.id.request_coins_fragment_nfc_enabled);
 
@@ -129,12 +129,16 @@ public final class RequestCoinsFragment extends Fragment
 						new Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_TEXT, determineAddressStr()).setType("text/plain"), getActivity()
 								.getString(R.string.request_coins_share_dialog_title)));
 			}
-		});
+		}); 
 
-		actionBar.addButton(R.drawable.ic_action_copy).setOnClickListener(new OnClickListener()
+		actionBar.addButton(R.drawable.icon_piggy_bank).setOnClickListener(new OnClickListener()
 		{
 			public void onClick(final View v)
 			{
+				
+				WalletAddressesActivity.start(getActivity(), true);
+
+				/*
 				final ClipboardManager clipboardManager = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
 				final String addressStr = determineAddressStr();
 				
@@ -144,7 +148,7 @@ public final class RequestCoinsFragment extends Fragment
 				clipboardManager.setText(addressStr);
 				((AbstractWalletActivity) getActivity()).toast(R.string.request_coins_clipboard_msg);
 
-				System.out.println("bitcoin request uri: " + addressStr + (Constants.TEST ? " [testnet]" : ""));
+				System.out.println("bitcoin request uri: " + addressStr + (Constants.TEST ? " [testnet]" : ""));*/
 			}
 		});
 	}
